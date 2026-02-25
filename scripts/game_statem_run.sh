@@ -11,12 +11,6 @@ if ! command -v uv &>/dev/null; then
     exit 1
 fi
 
-# 环境变量（key 留空，请在本脚本中填写或通过 .env 覆盖）
-export OPENAI_BASE_URL="${OPENAI_BASE_URL:-https://app.onerouter.pro/v1}"
-export OPENAI_API_KEY="${OPENAI_API_KEY:-}"
-export STORY_WORLD_MODEL="${STORY_WORLD_MODEL:-gpt-4.1}"
-export OPENAI_MODEL="${OPENAI_MODEL:-google-ai-studio/gemini-2.5-flash}"
-
 echo "项目根目录: $PROJECT_ROOT"
 echo "启动服务: uv run python app.py"
 uv run python app.py
