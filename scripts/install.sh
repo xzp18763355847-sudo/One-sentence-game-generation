@@ -13,8 +13,6 @@ fi
 
 echo "项目根目录: $PROJECT_ROOT"
 echo "创建虚拟环境并安装依赖..."
-uv venv
-source .venv/bin/activate
-uv pip install -e .
+uv sync
 
 echo "安装完成。激活环境: source $PROJECT_ROOT/.venv/bin/activate"

@@ -163,11 +163,11 @@ def send_message_sse():
     发送玩家消息 API（SSE 分段返回）
 
     请求体：与 /api/message 相同 {"group_id", "text", "player_name"}
-    返回：text/event-stream，按顺序推送（每条 data 均为统一顶层格式）：
-      - event "transition"  data: {"type":"reply","payload":{"content":{...}},"message_id":"..."}
-      - event "narration"   data: 同上，content 含 narration、sound
-      - event "dialogues"   data: 同上，content 含 dialogues、hooks，可选 aigc_generate
-      - event "status"      data: 同上，content 为完整游戏状态
+    返回：text/event-stream，按顺序推送（每条以 { 开头的 JSON，无 event/data 前缀；统一顶层格式）：
+      - {"type":"reply","payload":{"content":{...}},"message_id":"..."}  （第 1 条：transition）
+      - 同上，content 含 narration、sound
+      - 同上，content 含 dialogues、hooks，可选 aigc_generate
+      - 同上，content 为完整游戏状态
     错误时返回 400 + JSON {"error": "..."}，不走 SSE。
     """
     data = request.get_json(silent=True) or {}
@@ -200,16 +200,16 @@ def send_message_sse():
 
     def generate():
         # 1) transition
-        yield f"event: transition\ndata: {json.dumps(_wrap_reply({'transition': transition}), ensure_ascii=False)}\n\n"
+        yield json.dumps(_wrap_reply({"transition": transition}), ensure_ascii=False) + "\n\n"
         # 2) narration + sound
-        yield f"event: narration\ndata: {json.dumps(_wrap_reply({'narration': narration, 'sound': sound}), ensure_ascii=False)}\n\n"
+        yield json.dumps(_wrap_reply({"narration": narration, "sound": sound}), ensure_ascii=False) + "\n\n"
         # 3) dialogues + hooks（若 result 含 aigc_generate 则一并返回）
         dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
         if aigc_generate is not None:
             dialogues_payload["aigc_generate"] = aigc_generate
-        yield f"event: dialogues\ndata: {json.dumps(_wrap_reply(dialogues_payload), ensure_ascii=False)}\n\n"
+        yield json.dumps(_wrap_reply(dialogues_payload), ensure_ascii=False) + "\n\n"
         # 4) 完整状态，便于前端更新 UI
-        yield f"event: status\ndata: {json.dumps(_wrap_reply(result), ensure_ascii=False)}\n\n"
+        yield json.dumps(_wrap_reply(result), ensure_ascii=False) + "\n\n"
 
     return Response(
         stream_with_context(generate()),

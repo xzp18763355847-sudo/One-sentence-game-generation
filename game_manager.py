@@ -1814,7 +1814,7 @@ class GameManager:
             self._log_flow("大纲生成完成", "等待确认")
         
         # 先完成大纲生成的事务（_with_txn 会自动持久化状态）
-        self._with_txn(_impl)
+        self._with_txn_for_group(group_id, _impl)
         
         # 5. 调用 send_message("确认") 来触发剧本生成和世界构建
         # 注意：send_message 内部会处理事务，所以这里不需要再包装事务
