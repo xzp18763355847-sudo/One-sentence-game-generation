@@ -256,5 +256,5 @@ def end_game():
 
 
 if __name__ == "__main__":
-    logger.info("server: http://127.0.0.1:8000")
+    logger.info("server: http://0.0.0.0:4000")
     app.run(debug=False, use_reloader=False, host="0.0.0.0", port=4000)
