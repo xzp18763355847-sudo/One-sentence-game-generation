@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🐢 故事会 - 剧情游戏</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=ZCOOL+KuaiLe&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="turtle-icon">🐢</span>
+                <h1>故事会</h1>
+            </div>
+            <p class="tagline">剧情游戏</p>
+        </header>
+
+        <!-- Game Status Bar -->
+        <div class="status-bar">
+            <div class="status-item">
+                <span class="label">游戏状态</span>
+                <span id="gameState" class="value state-waiting">等待开始</span>
+            </div>
+            <div class="status-item">
+                <span class="label">当前章节</span>
+                <span id="chapterInfo" class="value">-</span>
+            </div>
+            <div class="status-item">
+                <span class="label">当前轮次</span>
+                <span id="roundCount" class="value">0 / 20</span>
+            </div>
+            <div class="status-item">
+                <span class="label">本轮发言</span>
+                <span id="pendingCount" class="value pending-count">0 人</span>
+            </div>
+        </div>
+
+        <!-- 角色属性面板：血条、属性值（由 story_state 中的 player/角色 等驱动） -->
+        <div class="attributes-panel" id="attributesPanel">
+            <div class="attributes-panel-title">角色属性</div>
+            <div id="attributesBars" class="attributes-bars"></div>
+            <div id="attributesTags" class="attributes-tags"></div>
+            <div id="attributesEmpty" class="attributes-empty">暂无属性数据，AI 将在剧情中设定。</div>
+        </div>
+
+        <!-- User State Panel -->
+        <div class="state-panel">
+            <!-- <div class="panel-header">
+                <div class="panel-header-text">
+                    <span class="panel-title">State</span>
+                    <span id="globalDirection" class="panel-subtitle">Direction: -</span>
+                </div>
+                <span id="userCount" class="panel-badge">0 users</span>
+            </div> -->
+            <div id="globalStateList" class="global-state-list"></div>
+            <div id="userStateList" class="user-state-list"></div>
+        </div>
+
+        <!-- Chat Area -->
+        <div class="chat-container">
+            <div id="chatMessages" class="chat-messages">
+                <div class="welcome-message">
+                    <div class="welcome-icon">🎭</div>
+                    <h2>欢迎来到剧情游戏</h2>
+                    <p>点击下方的「开始游戏」按钮，开启你的游戏之旅！</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="input-area">
+            <div class="player-selector">
+                <label for="playerName">玩家：</label>
+                <!-- <select id="playerName">
+                    <option value="玩家1">玩家1</option>
+                    <option value="玩家2">玩家2</option>
+                    <option value="玩家3">玩家3</option>
+                    <option value="玩家4">玩家4</option>
+                </select>
+                <button id="addPlayerBtn" class="btn-icon" title="添加玩家">+</button> -->
+            </div>
+            <div class="message-input">
+                <textarea 
+                    id="questionInput" 
+                    placeholder="输入你的行动或发言（例如：调查桌上的信、和守卫交涉、去北门）..."
+                    rows="2"
+                    disabled
+                ></textarea>
+                <button id="sendBtn" class="btn-send" disabled>
+                    <span>发言</span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13M22 2L15 22L11 13M11 13L2 9L22 2"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+          
+        <!-- Control Buttons -->
+        <div class="game-type-panel">
+            <div class="game-type-row">
+                <label for="gameType" class="game-type-label">游戏类型</label>
+                <select id="gameType" class="game-type-select">
+                    <option value="story_chapter" selected>章节剧情类（有结局）</option>
+                    <option value="story_open">开放式剧情（无结局）</option>
+                    <option value="companion_route">角色陪伴：攻略类（有结局）</option>
+                    <option value="companion_open">角色陪伴：开放式（无结局）</option>
+                </select>
+            </div>
+            <div class="game-type-hint">提示：类型只影响“大纲/剧本/章节”生成方式，开始后不可切换。</div>
+        </div>
+        <div class="control-buttons">
+            <button id="startBtn" class="btn btn-primary">
+                <span>🎮</span> 开始游戏
+            </button>
+            <button id="endBtn" class="btn btn-danger" disabled>
+                <span>🏁</span> 结束游戏
+            </button>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay hidden">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>剧情正在继续...</p>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

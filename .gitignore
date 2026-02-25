@@ -1,0 +1,16 @@
+.env
+.idea/
+*.pyc
+__pycache__/
+*.json
+*.txt
+*.log
+*.csv
+*.jsonl
+*.jsonl.gz
+*.jsonl.bz2
+*.jsonl.zip
+*.jsonl.tar
+*.jsonl.tar.gz
+*.jsonl.tar.bz2
+*.jsonl.tar.zip
