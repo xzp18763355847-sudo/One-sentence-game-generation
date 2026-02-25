@@ -11,6 +11,7 @@
 
 import json
 import logging
+import uuid
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 
@@ -162,11 +163,11 @@ def send_message_sse():
     发送玩家消息 API（SSE 分段返回）
 
     请求体：与 /api/message 相同 {"group_id", "text", "player_name"}
-    返回：text/event-stream，按顺序推送：
-      - event "transition"  data: {"transition": "chapter_1"} 或 {"transition": ""}
-      - event "narration"   data: {"narration": "...", "sound": "..."}
-      - event "dialogues"   data: {"dialogues": [...], "hooks": {"player_goal": "..."}}
-      - event "status"      data: 完整游戏状态（与 get_status 一致，便于前端同步）
+    返回：text/event-stream，按顺序推送（每条 data 均为统一顶层格式）：
+      - event "transition"  data: {"type":"reply","payload":{"content":{...}},"message_id":"..."}
+      - event "narration"   data: 同上，content 含 narration、sound
+      - event "dialogues"   data: 同上，content 含 dialogues、hooks，可选 aigc_generate
+      - event "status"      data: 同上，content 为完整游戏状态
     错误时返回 400 + JSON {"error": "..."}，不走 SSE。
     """
     data = request.get_json(silent=True) or {}
@@ -191,15 +192,24 @@ def send_message_sse():
     if "player_goal" not in hooks:
         hooks["player_goal"] = ""
 
+    aigc_generate = result.get("aigc_generate") if "aigc_generate" in result else None
+    message_id = str(uuid.uuid4())
+
+    def _wrap_reply(content: dict) -> dict:
+        return {"type": "reply", "payload": {"content": content}, "message_id": message_id}
+
     def generate():
         # 1) transition
-        yield f"event: transition\ndata: {json.dumps({'transition': transition}, ensure_ascii=False)}\n\n"
+        yield f"event: transition\ndata: {json.dumps(_wrap_reply({'transition': transition}), ensure_ascii=False)}\n\n"
         # 2) narration + sound
-        yield f"event: narration\ndata: {json.dumps({'narration': narration, 'sound': sound}, ensure_ascii=False)}\n\n"
-        # 3) dialogues + hooks
-        yield f"event: dialogues\ndata: {json.dumps({'dialogues': dialogues, 'hooks': hooks}, ensure_ascii=False)}\n\n"
+        yield f"event: narration\ndata: {json.dumps(_wrap_reply({'narration': narration, 'sound': sound}), ensure_ascii=False)}\n\n"
+        # 3) dialogues + hooks（若 result 含 aigc_generate 则一并返回）
+        dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
+        if aigc_generate is not None:
+            dialogues_payload["aigc_generate"] = aigc_generate
+        yield f"event: dialogues\ndata: {json.dumps(_wrap_reply(dialogues_payload), ensure_ascii=False)}\n\n"
         # 4) 完整状态，便于前端更新 UI
-        yield f"event: status\ndata: {json.dumps(result, ensure_ascii=False)}\n\n"
+        yield f"event: status\ndata: {json.dumps(_wrap_reply(result), ensure_ascii=False)}\n\n"
 
     return Response(
         stream_with_context(generate()),
