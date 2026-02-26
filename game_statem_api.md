@@ -19,7 +19,7 @@
 | 字段            | 类型     | 必填  | 说明                                    |
 | ------------- | ------ | --- | ------------------------------------- |
 | group_id      | string | 否   | 群 ID，不传时使用默认 `group001`               |
-| text          | string | 是   | 游戏 ID，需为已配置的官方游戏（如 `og001`），无效时返回 400 |
+| game_id       | string | 是   | 游戏 ID，需为已配置的官方游戏（如 `og001`），无效时返回 400 |
 | language_code | string | 否   | 语言代码，默认 `cn （暂不支持多语种）`                |
 
 
@@ -36,7 +36,7 @@
 CURL请求：
 
 ```text
-curl -X POST "http://localhost:4000/api/start_offcial_game"   
+curl -X POST "http://34.142.222.177:4000/api/start_offcial_game"   
 -H "Content-Type: application/json"   
 -d "{\"group_id\": \"group_01\", \"game_id\": \"og001\" \"language_code\": \"cn\"}"
 ```
@@ -86,7 +86,7 @@ curl -X POST "http://localhost:4000/api/start_offcial_game"
 CURL请求：
 
 ```text
-curl -X POST "http://localhost:4000/api/message_sse"   
+curl -X POST "http://34.142.222.177:4000/api/message_sse"   
 -H "Content-Type: application/json"   
 -d '{"group_id": "group_01", "text": "我接受上传", "player_name": "user_1"} 
 ```
@@ -104,12 +104,14 @@ data: {"type":"reply","payload":{"can_feedback":false,"can_rating":true,"content
 
 同一次请求的 4 条使用同一个 `message_id`。`payload` 固定包含 `can_feedback`、`can_rating`、`content`；`payload.content` 含义依次为：
 
+
 | 顺序    | content 含义                                                                                   |
 | ----- | -------------------------------------------------------------------------------------------- |
 | 第 1 条 | `{"transition": "章节标识或空字符串"}`                                                                |
 | 第 2 条 | `{"narration": "旁白文本", "sound": "音效"}`                                                       |
 | 第 3 条 | `{"dialogues": [...], "hooks": {"player_goal": "..."}}`，若后端有 `aigc_generate` 会一并放在 content 中 |
 | 第 4 条 | 完整游戏状态（与 GET /api/status 结构一致），便于前端整体更新 UI                                                   |
+
 
 前端解析方式：按 `\n\n` 拆分为多条，每条的 `data:` 行后为 JSON 字符串，解析后从 `payload.content` 取业务数据；可根据 content 中出现的字段区分是 transition / narration / dialogues / 完整状态。
 
