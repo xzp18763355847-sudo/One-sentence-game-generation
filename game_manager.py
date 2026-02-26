@@ -1788,12 +1788,12 @@ class GameManager:
             gs.ended_reason = None
             
             # 获取官方游戏设定
-            prompts, game_type = get_official_game_prompt(game_id, language_code)
+            prompts, game_type = get_official_game_prompt(game_id, "cn")  # 默认用中文设定
             gs.game_type = game_type
             
             # 2. 生成游戏大纲
             self._log_flow("官方游戏", f"开始生成大纲，game_id={game_id}, language={language_code}")
-            generated_outline = self._generate_outline(prompts, game_type)
+            generated_outline = self._generate_outline(prompts, game_type)  # 暂不支持多语言大纲生成
             gs.outline = generated_outline
             gs.progress = Progress.AWAITING_OUTLINE_REVIEW
             
