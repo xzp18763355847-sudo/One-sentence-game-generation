@@ -58,7 +58,7 @@ curl -X POST "http://localhost:4000/api/start_offcial_game"
 
 **接口**：`POST /api/message_sse`
 
-**说明**：发送玩家消息并推进剧情，以流式方式返回多段 JSON（无 `event`/`data` 前缀，每条为完整 JSON 对象，以 `\n\n` 分隔）。
+**说明**：发送玩家消息并推进剧情，以流式方式返回多条 SSE 消息；每条为 `event: reply` + `data: <JSON>`，以 `\n\n` 分隔。
 
 ### 请求
 
@@ -94,20 +94,15 @@ curl -X POST "http://localhost:4000/api/message_sse"
 ### 响应
 
 - **Content-Type**：`text/event-stream`
-- **成功**：按顺序推送 **4 条** JSON 字符串，每条以 `{` 开头，两条之间用 `\n\n` 分隔。每条为统一顶层结构：
+- **成功**：按顺序推送 **4 条** SSE 消息，每条格式为两行 + 空行：
 
-```json
-{
-  "type": "reply",
-  "payload": {
-    "content": { ... }
-  },
-  "message_id": "<uuid>"
-}
+```text
+event: reply
+data: {"type":"reply","payload":{"can_feedback":false,"can_rating":true,"content":{...}},"message_id":"<uuid>"}
+
 ```
 
-同一次请求的 4 条使用同一个 `message_id`。`payload.content` 含义依次为：
-
+同一次请求的 4 条使用同一个 `message_id`。`payload` 固定包含 `can_feedback`、`can_rating`、`content`；`payload.content` 含义依次为：
 
 | 顺序    | content 含义                                                                                   |
 | ----- | -------------------------------------------------------------------------------------------- |
@@ -116,8 +111,7 @@ curl -X POST "http://localhost:4000/api/message_sse"
 | 第 3 条 | `{"dialogues": [...], "hooks": {"player_goal": "..."}}`，若后端有 `aigc_generate` 会一并放在 content 中 |
 | 第 4 条 | 完整游戏状态（与 GET /api/status 结构一致），便于前端整体更新 UI                                                   |
 
-
-前端解析方式：按 `\n\n` 拆分为多条，每条 `JSON.parse` 后从 `payload.content` 取业务数据，可根据 content 中出现的字段区分是 transition / narration / dialogues / 完整状态。
+前端解析方式：按 `\n\n` 拆分为多条，每条的 `data:` 行后为 JSON 字符串，解析后从 `payload.content` 取业务数据；可根据 content 中出现的字段区分是 transition / narration / dialogues / 完整状态。
 
 - **失败**：`400 Bad Request`，不走 SSE，Body 为普通 JSON，例如：
 
