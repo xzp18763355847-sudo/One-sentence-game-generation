@@ -163,11 +163,9 @@ def send_message_sse():
     发送玩家消息 API（SSE 分段返回）
 
     请求体：与 /api/message 相同 {"group_id", "text", "player_name"}
-    返回：text/event-stream，按顺序推送（每条以 { 开头的 JSON，无 event/data 前缀；统一顶层格式）：
-      - {"type":"reply","payload":{"content":{...}},"message_id":"..."}  （第 1 条：transition）
-      - 同上，content 含 narration、sound
-      - 同上，content 含 dialogues、hooks，可选 aigc_generate
-      - 同上，content 为完整游戏状态
+    返回：text/event-stream，按顺序推送（每条为 event: reply + data: JSON）：
+      - event: reply / data: {"type":"reply","payload":{"can_feedback":false,"content":{...}},"message_id":"..."}
+      - 第 1 条 content：transition；第 2 条 narration、sound；第 3 条 dialogues、hooks（可选 aigc_generate）；第 4 条完整状态
     错误时返回 400 + JSON {"error": "..."}，不走 SSE。
     """
     data = request.get_json(silent=True) or {}
@@ -196,20 +194,27 @@ def send_message_sse():
     message_id = str(uuid.uuid4())
 
     def _wrap_reply(content: dict) -> dict:
-        return {"type": "reply", "payload": {"content": content}, "message_id": message_id}
+        return {
+            "type": "reply",
+            "payload": {"can_feedback": False, "can_rating":True, "content": content},
+            "message_id": message_id,
+        }
+
+    def _sse_chunk(obj: dict) -> str:
+        return f"event: reply\ndata: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
     def generate():
         # 1) transition
-        yield json.dumps(_wrap_reply({"transition": transition}), ensure_ascii=False) + "\n\n"
+        yield _sse_chunk(_wrap_reply({"transition": transition}))
         # 2) narration + sound
-        yield json.dumps(_wrap_reply({"narration": narration, "sound": sound}), ensure_ascii=False) + "\n\n"
+        yield _sse_chunk(_wrap_reply({"narration": narration, "sound": sound}))
         # 3) dialogues + hooks（若 result 含 aigc_generate 则一并返回）
         dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
         if aigc_generate is not None:
             dialogues_payload["aigc_generate"] = aigc_generate
-        yield json.dumps(_wrap_reply(dialogues_payload), ensure_ascii=False) + "\n\n"
+        yield _sse_chunk(_wrap_reply(dialogues_payload))
         # 4) 完整状态，便于前端更新 UI
-        yield json.dumps(_wrap_reply(result), ensure_ascii=False) + "\n\n"
+        yield _sse_chunk(_wrap_reply(result))
 
     return Response(
         stream_with_context(generate()),

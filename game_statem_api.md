@@ -33,6 +33,14 @@
 }
 ```
 
+CURL请求：
+
+```text
+curl -X POST "http://localhost:4000/api/start_offcial_game"   
+-H "Content-Type: application/json"   
+-d "{\"group_id\": \"group_01\", \"text\": \"og001\", \"language_code\": \"cn\"}"
+```
+
 ### 响应
 
 - **成功**：`200 OK`，Body 为 JSON，内容为 `game_manager.create_official_game` 的返回值（包含游戏初始化/状态信息）。
@@ -73,6 +81,14 @@
   "text": "你好",
   "player_name": "玩家"
 }
+```
+
+CURL请求：
+
+```text
+curl -X POST "http://localhost:4000/api/message_sse"   
+-H "Content-Type: application/json"   
+-d '{"group_id": "group_01", "text": "我接受上传", "player_name": "user_1"} 
 ```
 
 ### 响应
