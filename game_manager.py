@@ -19,7 +19,6 @@ AI 剧情游戏 - 单人版 GameManager（不写死 state 字段）
 - 这样不会出现“worker B 用旧内存覆盖 worker A 的新存档”的回滚问题
 """
 
-import logging
 import json
 import os
 import re
@@ -61,12 +60,9 @@ from game_generators import (
 # Linux 文件锁（gunicorn 多 worker 必备）
 import fcntl
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = logging.getLogger(__name__)
+from log_config import get_logger
+
+logger = get_logger(__name__)
 
 T = TypeVar("T")
 

@@ -28,7 +28,7 @@
 ```json
 {
   "group_id": "group_01",
-  "text": "og001",
+  "game_id": "og001",
   "language_code": "cn"
 }
 ```
@@ -38,7 +38,7 @@ CURL请求：
 ```text
 curl -X POST "http://localhost:4000/api/start_offcial_game"   
 -H "Content-Type: application/json"   
--d "{\"group_id\": \"group_01\", \"text\": \"og001\", \"language_code\": \"cn\"}"
+-d "{\"group_id\": \"group_01\", \"game_id\": \"og001\" \"language_code\": \"cn\"}"
 ```
 
 ### 响应

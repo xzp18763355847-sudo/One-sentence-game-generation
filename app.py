@@ -10,21 +10,16 @@
 # """
 
 import json
-import logging
 import uuid
 from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
 from flask_cors import CORS
 
+from log_config import get_logger
 from game_manager import GameManager
 from game_types import GameType, is_valid_game_type
 from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 app = Flask(__name__, static_folder="frontend", static_url_path="")
 CORS(app, resources={r"/api/*": {"origins": "*"}})
@@ -115,11 +110,11 @@ def start_offcial_game():
     开始官方游戏 API
     
     功能：初始化并开始一个新的官方游戏会话
-    请求体：{"group_id": "群ID", "text": "游戏ID", "language_code": "语言代码"}
+    请求体：{"group_id": "群ID", "game_id": "游戏ID", "language_code": "语言代码"}
     """
     data = request.get_json(silent=True) or {}
     group_id = _get_group_id(data)
-    game_id = data.get("text", "").strip()
+    game_id = data.get("game_id", "").strip()
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
         return jsonify({"error": f"无效的游戏ID: {game_id}"}), 400
     language_code = data.get("language_code", "cn").strip()
@@ -214,7 +209,7 @@ def send_message_sse():
             dialogues_payload["aigc_generate"] = aigc_generate
         yield _sse_chunk(_wrap_reply(dialogues_payload))
         # 4) 完整状态，便于前端更新 UI
-        yield _sse_chunk(_wrap_reply(result))
+        # yield _sse_chunk(_wrap_reply(result))
 
     return Response(
         stream_with_context(generate()),
