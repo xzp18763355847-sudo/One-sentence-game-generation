@@ -166,7 +166,7 @@ def send_message_sse():
     data = request.get_json(silent=True) or {}
     group_id = _get_group_id(data)
     text = (data.get("text") or "").strip()
-    player_name = (data.get("player_name") or "玩家").strip() or "玩家"
+    player_name = data.get("player_name", "").strip() or "玩家"
 
     result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name)
     if "error" in result:
