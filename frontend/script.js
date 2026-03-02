@@ -425,8 +425,12 @@ function updateGameUI(data, options) {
   if (gameTypeSelect) {
     gameTypeSelect.disabled = isPlaying;
   }
-  if (languageCodeSelect) {
-    languageCodeSelect.disabled = isPlaying;
+if (languageCodeSelect) {
+    languageCodeSelect.disabled = false;
+    // 同步服务器返回的语言代码到语言选择器
+    if (data && data.global_state && data.global_state.language_code) {
+      languageCodeSelect.value = data.global_state.language_code;
+    }
   }
 
   // 根据阶段切换 placeholder
@@ -490,7 +494,9 @@ async function sendMessage() {
   // 发送消息时临时禁用按钮，但输入框保持开启
   sendBtn.disabled = true;
   showLoading(true);
-  const language_code = languageCodeSelect?.value || 'cn';
+  const language_code = (languageCodeSelect && languageCodeSelect.value)
+      ? String(languageCodeSelect.value)
+      : 'cn';
   try {
     const data = await apiCall('/message', 'POST', {
       player_name: playerName?.value || '玩家',
