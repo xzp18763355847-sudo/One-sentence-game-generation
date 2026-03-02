@@ -3,7 +3,7 @@
  */
 
 // const API_BASE = 'http://183.166.183.2:43000/api';
-const API_BASE = 'http://127.0.0.1:4000/api';
+const API_BASE = 'http://127.0.0.1:4001/api';
 
 const chatMessages = document.getElementById('chatMessages');
 const questionInput = document.getElementById('questionInput');
@@ -412,13 +412,13 @@ function updateGameUI(data, options) {
 
   endBtn.disabled = (gameState === 'not_started');
 
-  // not_started 时允许预先输入一句话，点击开始时一并发送
+  // 输入框始终保持开启
+  questionInput.disabled = false;
+  // not_started 时不能直接发言，只能先点开始
   if (gameState === 'not_started') {
-    questionInput.disabled = false;
-    sendBtn.disabled = true; // 不能直接发言，只能先点开始
+    sendBtn.disabled = true;
   } else {
-    questionInput.disabled = !isPlaying;
-    sendBtn.disabled = questionInput.disabled;
+    sendBtn.disabled = false;
   }
 
   // 游戏进行中不允许切换类型和语言
@@ -438,6 +438,8 @@ function updateGameUI(data, options) {
     questionInput.placeholder = '请输入剧情大纲（第一条消息会被当作大纲）...';
   } else if (gameState === 'in_progress') {
     questionInput.placeholder = '输入你的行动/对白/尝试...';
+  } else if (gameState === 'ended') {
+    questionInput.placeholder = '游戏已结束，你仍可以继续对话...';
   } else {
     questionInput.placeholder = '先在这里输入一句话描述你的游戏，再点击「开始游戏」...';
   }
@@ -470,8 +472,8 @@ async function startGame() {
     if (initialText) {
       body.text = initialText;
     }
-    const data = await apiCall('/start', 'POST', body);
-    // const data = await apiCall('/start_offcial_game', 'POST', body);
+    // const data = await apiCall('/start', 'POST', body);
+    const data = await apiCall('/start_offcial_game', 'POST', body);
     updateGameUI(data);
   } catch (e) {
     alert('启动失败: ' + e.message);
@@ -485,7 +487,7 @@ async function sendMessage() {
   const text = questionInput.value.trim();
   if (!text) return;
 
-  questionInput.disabled = true;
+  // 发送消息时临时禁用按钮，但输入框保持开启
   sendBtn.disabled = true;
   showLoading(true);
 
@@ -500,11 +502,10 @@ async function sendMessage() {
     alert('发送失败: ' + e.message);
   } finally {
     showLoading(false);
-    if (gameState === 'awaiting_outline' || gameState === 'in_progress') {
-      questionInput.disabled = false;
-      sendBtn.disabled = false;
-      questionInput.focus();
-    }
+    // 输入框始终保持开启
+    questionInput.disabled = false;
+    sendBtn.disabled = false;
+    questionInput.focus();
   }
 }
 
@@ -514,6 +515,14 @@ async function endGame() {
   try {
     const data = await apiCall('/end', 'POST');
     updateGameUI(data);
+    // 游戏结束后，确保输入框开启并聚焦
+    if (questionInput) {
+      questionInput.disabled = false;
+      questionInput.focus();
+    }
+    if (sendBtn) {
+      sendBtn.disabled = false;
+    }
   } catch (e) {
     alert('结束失败: ' + e.message);
   } finally {

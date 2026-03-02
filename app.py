@@ -15,9 +15,10 @@ from flask import Flask, request, jsonify, send_from_directory, Response, stream
 from flask_cors import CORS
 
 from log_config import get_logger
-from game_manager import GameManager
+from game_manager import GameManager, Game
 from game_types import GameType, is_valid_game_type
 from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
+from preset_games import PRESET_GAME_SNAPSHOTS
 
 logger = get_logger(__name__)
 
@@ -114,12 +115,33 @@ def start_offcial_game():
     """
     data = request.get_json(silent=True) or {}
     group_id = _get_group_id(data)
-    game_id = data.get("game_id", "").strip()
+    # game_id = data.get("game_id", "").strip()
+    game_id = data.get("text", "").strip()
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
         return jsonify({"error": f"无效的游戏ID: {game_id}"}), 400
     # language_code = data.get("language_code", "cn").strip()
     language_code = "en"
     logger.info(f"POST /api/start_offcial_game group_id={group_id} game_id={game_id}")
+    
+    # 检测是否为预设游戏ID，如果是则直接加载预设游戏，跳过模型生成
+    if game_id in PRESET_GAME_SNAPSHOTS:
+        logger.info(f"检测到预设游戏ID ({game_id})，直接加载预设游戏数据，跳过模型生成")
+        preset_snapshot = PRESET_GAME_SNAPSHOTS[game_id]
+        
+        # 使用事务加载预设游戏并保存到对应的 group_id 快照文件
+        def _load_preset_game():
+            # 从预设游戏快照创建 Game 对象
+            game_manager.game = Game.from_snapshot(preset_snapshot)
+            logger.info(f"预设游戏已加载到内存")
+        
+        # 使用事务保存预设游戏
+        game_manager._with_txn_for_group(group_id, _load_preset_game)
+        
+        # 返回游戏状态
+        result = game_manager.get_status(group_id)
+        return jsonify(result)
+    
+    # 普通 game_id: 使用原有逻辑生成游戏
     result = game_manager.create_official_game(group_id=group_id, game_id=game_id, language_code=language_code)
     return jsonify(result)
 
@@ -267,5 +289,5 @@ def end_game():
 
 
 if __name__ == "__main__":
-    logger.info("server: http://0.0.0.0:4000")
-    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=4000)
+    logger.info("server: http://0.0.0.0:4001")
+    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=4001)
