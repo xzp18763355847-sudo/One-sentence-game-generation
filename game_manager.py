@@ -786,26 +786,27 @@ class GameManager:
         logger.info(f"[剧情变更] 回合{round_num} {status}: {' '.join(parts)}")
 
     # ---------- aigc_generate ----------
-    # 每 5 轮触发一次，两种媒体类型交替返回
-    _AIGC_GENERATE_VALUES = ("game_image", "game_video_with_audio_self")
-    _AIGC_GENERATE_INTERVAL = 5
+    # 第 2 回合、第 5 回合及之后每 5 回合触发；多种类型时按触发次序交替
+    # _AIGC_GENERATE_VALUES = ("game_image", "game_video_with_audio_self")
+    _AIGC_GENERATE_VALUES = ("game_video_with_audio_self",)
 
     @staticmethod
     def _pick_aigc_generate(round_count: int) -> Optional[str]:
         """
         根据当前回合数决定是否下发 aigc_generate 指令。
 
-        规则：每 _AIGC_GENERATE_INTERVAL 轮触发一次，
-        两种类型按触发次序交替：
-            第 5  轮 → game_image
-            第 10 轮 → game_video_with_audio_self
-            第 15 轮 → game_image  …以此类推
+        规则：第 2 回合触发一次，第 5 回合触发，之后每 5 回合触发一次（第 5、10、15… 轮）。
+        多种类型时按触发次序交替返回。
         返回 None 表示本轮不触发。
         """
-        interval = GameManager._AIGC_GENERATE_INTERVAL
-        if round_count > 0 and round_count % interval == 0:
-            idx = (round_count // interval - 1) % len(GameManager._AIGC_GENERATE_VALUES)
-            return GameManager._AIGC_GENERATE_VALUES[idx]
+        if round_count <= 0:
+            return None
+        values = GameManager._AIGC_GENERATE_VALUES
+        if round_count == 2:
+            return values[0]
+        if round_count >= 5 and round_count % 5 == 0:
+            idx = (round_count // 5 - 1) % len(values)
+            return values[idx]
         return None
 
     # ---------- persistence ----------
