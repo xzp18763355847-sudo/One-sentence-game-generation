@@ -66,12 +66,12 @@ curl -X POST "http://34.142.222.177:4000/api/start_offcial_game"
 - **Body**：与 `/api/message` 相同
 
 
-| 字段          | 类型     | 必填  | 说明                      |
-| ----------- | ------ | --- | ----------------------- |
-| group_id    | string | 否   | 群 ID，不传时使用默认 `group001` |
-| text        | string | 是   | 玩家发送的文本内容               |
-| player_name | string | 否   | 玩家名称，默认 `"玩家"`          |
-
+| 字段            | 类型     | 必填  | 说明                          |
+| ------------- | ------ | --- | --------------------------- |
+| group_id      | string | 否   | 群 ID，不传时使用默认 `group001`     |
+| text          | string | 是   | 玩家发送的文本内容                   |
+| player_name   | string | 否   | 玩家名称，默认 `"玩家"`              |
+| language_code | string | 否   | 语言代码，默认 `"en"`，用于回复语言等场景 |
 
 示例：
 
@@ -79,7 +79,8 @@ curl -X POST "http://34.142.222.177:4000/api/start_offcial_game"
 {
   "group_id": "group_01",
   "text": "你好",
-  "player_name": "玩家"
+  "player_name": "玩家",
+  "language_code": "en"
 }
 ```
 
@@ -88,7 +89,7 @@ CURL请求：
 ```text
 curl -X POST "http://34.142.222.177:4000/api/message_sse"   
 -H "Content-Type: application/json"   
--d '{"group_id": "group_01", "text": "我接受上传", "player_name": "user_1"} 
+-d '{"group_id": "group_01", "text": "我接受上传", "player_name": "user_1", "language_code": "en"}'
 ```
 
 ### 响应

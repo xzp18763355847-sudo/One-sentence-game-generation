@@ -181,7 +181,7 @@ def send_message_sse():
     """
     发送玩家消息 API（SSE 分段返回）
 
-    请求体：与 /api/message 相同 {"group_id", "text", "player_name"}
+    请求体：与 /api/message 相同 {"group_id", "text", "player_name", "language_code"}
     返回：text/event-stream，按顺序推送（每条为 event: reply + data: JSON）：
       - event: reply / data: {"type":"reply","payload":{"can_feedback":false,"content":{...}},"message_id":"..."}
       - 第 1 条 content：transition；第 2 条 narration、sound；第 3 条 dialogues、hooks（可选 aigc_generate）；第 4 条完整状态
