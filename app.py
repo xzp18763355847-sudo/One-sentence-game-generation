@@ -122,25 +122,25 @@ def start_offcial_game():
     # language_code = data.get("language_code", "cn").strip()
     language_code = "en"
     logger.info(f"POST /api/start_offcial_game group_id={group_id} game_id={game_id}")
-    
+
     # 检测是否为预设游戏ID，如果是则直接加载预设游戏，跳过模型生成
     if game_id in PRESET_GAME_SNAPSHOTS:
         logger.info(f"检测到预设游戏ID ({game_id})，直接加载预设游戏数据，跳过模型生成")
         preset_snapshot = PRESET_GAME_SNAPSHOTS[game_id]
-        
+
         # 使用事务加载预设游戏并保存到对应的 group_id 快照文件
         def _load_preset_game():
             # 从预设游戏快照创建 Game 对象
             game_manager.game = Game.from_snapshot(preset_snapshot)
             logger.info(f"预设游戏已加载到内存")
-        
+
         # 使用事务保存预设游戏
         game_manager._with_txn_for_group(group_id, _load_preset_game)
-        
+
         # 返回游戏状态
         result = game_manager.get_status(group_id)
         return jsonify(result)
-    
+
     # 普通 game_id: 使用原有逻辑生成游戏
     result = game_manager.create_official_game(group_id=group_id, game_id=game_id, language_code=language_code)
     return jsonify(result)
@@ -161,11 +161,12 @@ def send_message():
     print("输入data================")
     group_id = _get_group_id(data)
     text = (data.get("text") or "").strip()
-    player_name = (data.get("player_name") or "玩家").strip() or "玩家"
+    language_code = (data.get("language_code") or "en").strip()
+    player_name = (data.get("player_name") or "玩家").strip()
     logger.info("POST /api/message group_id=%s player=%s len=%d text_preview=%s",
                 group_id, player_name, len(text),
                 (text[:30] + "..." if len(text) > 30 else text))
-    result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name)
+    result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name, language_code = language_code)
     code = 200 if "error" not in result else 400
     if "error" in result:
         logger.warning("POST /api/message group_id=%s error=%s", group_id, result.get("error"))
@@ -289,5 +290,5 @@ def end_game():
 
 
 if __name__ == "__main__":
-    logger.info("server: http://0.0.0.0:4001")
-    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=4001)
+    logger.info("server: http://0.0.0.0:4000")
+    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=4000)

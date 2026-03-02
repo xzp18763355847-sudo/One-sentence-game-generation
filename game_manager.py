@@ -116,24 +116,24 @@ SYSTEM_MESSAGES = {
 def get_system_message(key: str, language_code: str = "cn", **kwargs) -> str:
     """
     根据 language_code 获取系统消息
-    
+
     参数:
         key: 消息键名
         language_code: 语言代码（cn/en，默认cn）
         **kwargs: 用于格式化消息的参数
-        
+
     返回:
         格式化后的消息字符串
     """
     lang = language_code.lower() if language_code else "cn"
     if lang not in ("cn", "en"):
         lang = "cn"
-    
+
     message_template = SYSTEM_MESSAGES.get(lang, SYSTEM_MESSAGES["cn"]).get(key, "")
     if not message_template:
         # 如果找不到消息，尝试从中文获取
         message_template = SYSTEM_MESSAGES["cn"].get(key, key)
-    
+
     return message_template.format(**kwargs) if kwargs else message_template
 
 
@@ -295,7 +295,7 @@ class GlobalState:
     story_state: Dict[str, Any] = field(default_factory=dict)
     direction: str = ""
     language_code: str = "cn"  # 语言代码，默认为中文
-    
+
     # 章节系统
     current_chapter: int = 1  # 当前章节编号（从1开始）
     chapters: List[Dict[str, Any]] = field(default_factory=list)  # 章节列表，每个章节包含：title, goal, description
@@ -1186,7 +1186,7 @@ class GameManager:
 
         return self._with_txn_for_group(group_id, _impl)
 
-    def send_message(self, group_id: str, text: str, player_name: str = "玩家") -> dict:
+    def send_message(self, group_id: str, text: str, player_name: str = "玩家", language_code: str = "en") -> dict:
         """
         发送玩家消息并推进游戏（按 group_id 隔离）
         
@@ -1202,7 +1202,7 @@ class GameManager:
 
         def _impl():
             # 捕获外部作用域的变量，避免闭包作用域问题
-            nonlocal text, player_name
+            nonlocal text, player_name, language_code
             
             if not self.game:
                 return {"error": "游戏未开始"}
@@ -1213,7 +1213,7 @@ class GameManager:
 
             # 记录玩家消息
             self.game.messages.append(Message(role="player", player_name=player_name, content=text))
-
+            gs.language_code = language_code
             # 1) 等待初始输入：生成大纲
             if gs.progress == Progress.AWAITING_INITIAL_INPUT:
                 generated_outline = self._generate_outline(text, gs.game_type, gs.language_code)
@@ -1398,7 +1398,7 @@ class GameManager:
             if event_used:
                 director_prompt += f"\n\n【本回合触发事件】{event_used.event_id}：{event_used.narrative_template}\n请据此强化叙事氛围，但仍由你输出完整叙事推进剧情。"
                 self._log_flow("事件触发", f"{event_used.event_id} → 注入导演提示，LLM 继续输出")
-            
+
             # 根据 language_code 添加语言要求
             language_code = gs.language_code or "en"
             # language_map = {
@@ -1408,7 +1408,7 @@ class GameManager:
             # }
             # language_name = language_map.get(language_code.lower(), "中文")
             language_instruction = f"\n\n【重要语言要求】\n你必须使用language_code: {language_code}输出所有内容。包括：\n- narration（场景描述）\n- sound（声音描述）\n- dialogues[].text（NPC对话）\n- hooks.player_goal（行动建议）\n所有文本内容都必须使用 {language_code}，不得混用其他语言。"
-            
+
             system_content = TURN_ENGINE_SYSTEM_PROMPT + language_instruction + "\n\n" + director_prompt
             raw = self._call_openai(
                 model=self.turn_model,
@@ -1854,7 +1854,7 @@ class GameManager:
             gs.max_rounds = getattr(config, "MAX_ROUNDS", 200)
             gs.ended_reason = None
             gs.language_code = language_code  # 保存语言代码到状态
-            
+
             # 获取官方游戏设定
             prompts, game_type = get_official_game_prompt(game_id, "cn")  # 默认用中文设定
             gs.game_type = game_type

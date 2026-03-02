@@ -3,7 +3,7 @@
  */
 
 // const API_BASE = 'http://183.166.183.2:43000/api';
-const API_BASE = 'http://127.0.0.1:4001/api';
+const API_BASE = 'http://127.0.0.1:4000/api';
 
 const chatMessages = document.getElementById('chatMessages');
 const questionInput = document.getElementById('questionInput');
@@ -490,11 +490,12 @@ async function sendMessage() {
   // 发送消息时临时禁用按钮，但输入框保持开启
   sendBtn.disabled = true;
   showLoading(true);
-
+  const language_code = languageCodeSelect?.value || 'cn';
   try {
     const data = await apiCall('/message', 'POST', {
       player_name: playerName?.value || '玩家',
-      text
+      text: text,
+      language_code: language_code
     });
     questionInput.value = '';
     updateGameUI(data, { streamLast: true });
