@@ -24,6 +24,7 @@ import os
 import re
 import tempfile
 import threading
+import time
 from enum import Enum
 from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional, Tuple, Callable, TypeVar
@@ -1201,6 +1202,7 @@ class GameManager:
             return {"error": "请输入内容"}
 
         def _impl():
+            s = time.time()   # 记录开始时间
             # 捕获外部作用域的变量，避免闭包作用域问题
             nonlocal text, player_name, language_code
             
@@ -1410,6 +1412,7 @@ class GameManager:
             language_instruction = f"\n\n【重要语言要求】\n你必须使用language_code: {language_code}输出所有内容。包括：\n- narration（场景描述）\n- sound（声音描述）\n- dialogues[].text（NPC对话）\n- hooks.player_goal（行动建议）\n所有文本内容都必须使用 {language_code}，不得混用其他语言。"
 
             system_content = TURN_ENGINE_SYSTEM_PROMPT + language_instruction + "\n\n" + director_prompt
+            start = time.time()
             raw = self._call_openai(
                 model=self.turn_model,
                 messages=[
@@ -1418,6 +1421,7 @@ class GameManager:
                 ],
                 temperature=0.7,
             )
+            logger.info(f"---------- LLM耗时: {time.time() - start:.2f}s -------------")
             out, err = extract_first_json_object(raw)
             if out is None:
                 logger.warning(f"turn engine parse failed: {err}")
@@ -1674,6 +1678,7 @@ class GameManager:
             resp = self._build_status_response()
             if _aigc:
                 resp["aigc_generate"] = _aigc
+            logger.info(f"---------- 总耗时: {time.time() - s:.2f}s -------------")
             return resp
 
         return self._with_txn_for_group(group_id, _impl)
