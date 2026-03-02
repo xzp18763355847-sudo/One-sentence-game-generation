@@ -191,8 +191,8 @@ def send_message_sse():
     group_id = _get_group_id(data)
     text = (data.get("text") or "").strip()
     player_name = data.get("player_name", "").strip() or "玩家"
-
-    result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name)
+    language_code = (data.get("language_code") or "en").strip()
+    result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name, language_code = language_code)
     if "error" in result:
         logger.warning("POST /api/message_sse group_id=%s error=%s", group_id, result.get("error"))
         return jsonify(result), 400
