@@ -70,7 +70,7 @@ def start_game():
     开始新游戏 API
     
     功能：初始化并开始一个新的游戏会话
-    请求体：{"group_id": "群ID", "game_type": "游戏类型", "text": "初始文本", "game_id": "官方游戏ID"}（可选）
+    请求体：{"group_id": "群ID", "game_type": "游戏类型", "text": "初始文本", "language_code": "语言代码（cn/en，默认cn）"}（可选）
     返回：包含完整游戏状态的 JSON 响应（包括 messages、state、script 等）
     """
     data = request.get_json(silent=True) or {}
@@ -87,11 +87,11 @@ def start_game():
         return jsonify({"error": f"无效的游戏类型: {game_type}"}), 400
 
     logger.info(
-        f"POST /api/start 开始新游戏 group_id={group_id} game_type={game_type} text_len={len(text)}")
+        f"POST /api/start 开始新游戏 group_id={group_id} game_type={game_type} text_len={len(text)} language_code={language_code}")
 
     # 返回完整的游戏状态（包含 messages、state、script 等）
     # 这样前端可以正常显示游戏内容
-    result = game_manager.start_game(group_id=group_id, game_type=game_type, text=text)
+    result = game_manager.start_game(group_id=group_id, game_type=game_type, text=text, language_code=language_code)
     print("开始游戏输出result（完整状态）================")
     print(result)
     print("开始游戏输出result（完整状态）================")
@@ -122,7 +122,8 @@ def start_offcial_game():
     game_id = data.get("text", "").strip()
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
         return jsonify({"error": f"无效的游戏ID: {game_id}"}), 400
-    language_code = data.get("language_code", "cn").strip()
+    # language_code = data.get("language_code", "cn").strip()
+    language_code = "en"
     logger.info(f"POST /api/start_offcial_game group_id={group_id} game_id={game_id}")
     result = game_manager.create_official_game(group_id=group_id, game_id=game_id, language_code=language_code)
     return jsonify(result)

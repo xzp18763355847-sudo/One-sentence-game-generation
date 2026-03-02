@@ -71,6 +71,77 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T")
 
 # =========================
+# 系统消息国际化字典
+# =========================
+SYSTEM_MESSAGES = {
+    "cn": {
+        "outline_generated": "📝 我已根据你的输入生成了以下剧情大纲：\n\n{outline}\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
+        "game_started": "🎮 已开始新游戏。\n\n请在下方输入**几句话**描述你的游戏想法（可以是零散的想法、关键词、场景描述等）。例如：\n- 赛博朋克、侦探、记忆交易、失踪案\n- 中世纪、小镇、瘟疫、教会阴谋\n\n我会根据你的输入生成一个详细的剧情大纲，你可以修改后再确认生成游戏。",
+        "confirm_generating": "✅ 已确认，正在生成游戏剧本...",
+        "outline_updated": "✅ 大纲已更新。发送「确认」或「开始」来生成游戏，或继续修改大纲。",
+        "chapter_start": "📖 {title}：开始",
+        "chapter_goal": "🎯 本章目标：{goal}",
+        "chapter_end": "✨ {title}：结束\n\n",
+        "chapter_completed": "🎉 恭喜！你已完成本章目标：{goal}\n\n",
+        "all_chapters_completed": "🏁 所有章节已完成！故事即将迎来结局...",
+        "story_continues": "故事继续...",
+        "round_waiting": "📖 第 {round} 回合：\n\n（等待剧情推进...）",
+        "game_ended_affection": "💕 恭喜！你与{name}的好感度已达到满值（100），达成了完美结局！",
+        "game_ended_reason": "🏁 故事结束（原因：{reason}）",
+        "ending_label": "结局：{ending_id}",
+        "restart_hint": "你可以点击「开始游戏」重开。",
+        "game_ended_manual": "🏁 已结束游戏。你可以点击「开始游戏」重开。",
+        "sound_label": "[声音：{sound}]",
+        "try_action": "\n你可以尝试：{goal}",
+    },
+    "en": {
+        "outline_generated": "📝 I have generated the following story outline based on your input:\n\n{outline}\n\nYou can send 'confirm' or 'start' to use this outline to generate the game, or send a modified outline to replace it.",
+        "game_started": "🎮 A new game has started.\n\nPlease enter a few sentences describing your game idea below (can be scattered ideas, keywords, scene descriptions, etc.). For example:\n- Cyberpunk, detective, memory trading, missing case\n- Medieval, small town, plague, church conspiracy\n\nI will generate a detailed story outline based on your input, which you can modify before confirming to generate the game.",
+        "confirm_generating": "✅ Confirmed, generating game script...",
+        "outline_updated": "✅ Outline updated. Send 'confirm' or 'start' to generate the game, or continue modifying the outline.",
+        "chapter_start": "📖 {title}: Start",
+        "chapter_goal": "🎯 Chapter Goal: {goal}",
+        "chapter_end": "✨ {title}: End\n\n",
+        "chapter_completed": "🎉 Congratulations! You have completed this chapter's goal: {goal}\n\n",
+        "all_chapters_completed": "🏁 All chapters completed! The story is about to reach its conclusion...",
+        "story_continues": "The story continues...",
+        "round_waiting": "📖 Round {round}:\n\n(Waiting for story progression...)",
+        "game_ended_affection": "💕 Congratulations! Your affection with {name} has reached the maximum (100), achieving the perfect ending!",
+        "game_ended_reason": "🏁 Story ended (reason: {reason})",
+        "ending_label": "Ending: {ending_id}",
+        "restart_hint": "You can click 'Start Game' to restart.",
+        "game_ended_manual": "🏁 Game ended. You can click 'Start Game' to restart.",
+        "sound_label": "[Sound: {sound}]",
+        "try_action": "\nYou can try: {goal}",
+    }
+}
+
+
+def get_system_message(key: str, language_code: str = "cn", **kwargs) -> str:
+    """
+    根据 language_code 获取系统消息
+    
+    参数:
+        key: 消息键名
+        language_code: 语言代码（cn/en，默认cn）
+        **kwargs: 用于格式化消息的参数
+        
+    返回:
+        格式化后的消息字符串
+    """
+    lang = language_code.lower() if language_code else "cn"
+    if lang not in ("cn", "en"):
+        lang = "cn"
+    
+    message_template = SYSTEM_MESSAGES.get(lang, SYSTEM_MESSAGES["cn"]).get(key, "")
+    if not message_template:
+        # 如果找不到消息，尝试从中文获取
+        message_template = SYSTEM_MESSAGES["cn"].get(key, key)
+    
+    return message_template.format(**kwargs) if kwargs else message_template
+
+
+# =========================
 # helpers
 # =========================
 def deep_merge(dst: dict, src: dict) -> dict:
@@ -227,6 +298,7 @@ class GlobalState:
     assets: Dict[str, Any] = field(default_factory=dict)
     story_state: Dict[str, Any] = field(default_factory=dict)
     direction: str = ""
+    language_code: str = "cn"  # 语言代码，默认为中文
     
     # 章节系统
     current_chapter: int = 1  # 当前章节编号（从1开始）
@@ -288,6 +360,7 @@ class GlobalState:
         gs.assets = d.get("assets", {}) if isinstance(d.get("assets"), dict) else {}
         gs.story_state = d.get("story_state", {}) if isinstance(d.get("story_state"), dict) else {}
         gs.direction = d.get("direction", "") or ""
+        gs.language_code = d.get("language_code", "cn") or "cn"
         gs.current_chapter = int(d.get("current_chapter", 1) or 1)
         gs.chapters = d.get("chapters", []) if isinstance(d.get("chapters"), list) else []
         gs.chapter_goal_completed = bool(d.get("chapter_goal_completed", False))
@@ -781,7 +854,7 @@ class GameManager:
         )
         return resp.choices[0].message.content or ""
 
-    def _generate_outline(self, user_input: str, game_type: str = "") -> str:
+    def _generate_outline(self, user_input: str, game_type: str = "", language_code: str = "cn") -> str:
         """
         根据用户输入的几句话生成剧情大纲
         
@@ -789,14 +862,15 @@ class GameManager:
         参数：
             user_input: 用户输入的几句话或关键词
             game_type: 游戏类型（可选）
+            language_code: 语言代码（cn=中文, en=英文）
         返回：生成的剧情大纲文本
         """
-        logger.info(f"📝 开始生成大纲，用户输入: {user_input[:100]}, game_type: {game_type}")
+        logger.info(f"📝 开始生成大纲，用户输入: {user_input[:100]}, game_type: {game_type}, language: {language_code}")
         raw = self._call_openai(
             model=self.world_model,
             messages=[
                 {"role": "system", "content": OUTLINE_GENERATOR_SYSTEM_PROMPT},
-                {"role": "user", "content": build_outline_prompt(user_input, game_type)},
+                {"role": "user", "content": build_outline_prompt(user_input, game_type, language_code)},
             ],
             temperature=0.7,
         )
@@ -806,7 +880,7 @@ class GameManager:
         logger.info(f"📝 大纲生成完成，长度: {len(outline)}")
         return outline
 
-    def _generate_script(self, outline: str, game_type: str = "") -> dict:
+    def _generate_script(self, outline: str, game_type: str = "", language_code: str = "cn") -> dict:
         """
         根据大纲生成游戏剧本
         
@@ -814,14 +888,15 @@ class GameManager:
         参数：
             outline: 剧情大纲文本
             game_type: 游戏类型
+            language_code: 语言代码（cn=中文, en=英文）
         返回：生成的剧本字典
         """
-        logger.info(f"📜 开始生成剧本，大纲长度: {len(outline)}, game_type: {game_type}")
+        logger.info(f"📜 开始生成剧本，大纲长度: {len(outline)}, game_type: {game_type}, language: {language_code}")
         raw = self._call_openai(
             model=self.world_model,
             messages=[
                 {"role": "system", "content": SCRIPT_GENERATOR_SYSTEM_PROMPT},
-                {"role": "user", "content": build_script_prompt(outline, game_type)},
+                {"role": "user", "content": build_script_prompt(outline, game_type, language_code)},
             ],
             temperature=0.2,
         )
@@ -877,7 +952,7 @@ class GameManager:
             "first_scene_prompt": "你在一间黑暗房间醒来，门缝漏出冷光。你要做什么？",
         }
 
-    def _build_world(self, script: dict, game_type: str = "") -> dict:
+    def _build_world(self, script: dict, game_type: str = "", language_code: str = "cn") -> dict:
         """
         构建游戏世界
         
@@ -885,14 +960,15 @@ class GameManager:
         参数：
             script: 游戏剧本字典（包含大纲、背景故事、章节、角色）
             game_type: 游戏类型
+            language_code: 语言代码（cn=中文, en=英文）
         返回：包含 assets、initial_state、chapters 等字段的字典
         """
-        logger.info(f"🌍 开始构建世界，剧本包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节")
+        logger.info(f"🌍 开始构建世界，剧本包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节，language: {language_code}")
         raw = self._call_openai(
             model=self.world_model,
             messages=[
                 {"role": "system", "content": WORLD_BUILDER_SYSTEM_PROMPT},
-                {"role": "user", "content": build_world_builder_prompt(script, game_type)},
+                {"role": "user", "content": build_world_builder_prompt(script, game_type, language_code)},
             ],
             temperature=0.2,
         )
@@ -1049,7 +1125,7 @@ class GameManager:
         return out
 
     # ---------- public API ----------
-    def start_game(self, group_id: str, game_type: str = "", text: str = "") -> dict:
+    def start_game(self, group_id: str, game_type: str = "", text: str = "", language_code: str = "cn") -> dict:
         """
         开始新游戏（按 group_id 隔离）
         
@@ -1057,6 +1133,7 @@ class GameManager:
             group_id: 群 ID（决定使用哪个快照）
             game_type: 游戏类型（可选）
             text: 初始文本（可选）
+            language_code: 语言代码（cn=中文, en=英文，默认cn）
         返回：包含游戏状态的字典
         """
         def _impl():
@@ -1067,6 +1144,7 @@ class GameManager:
             gs.max_rounds = getattr(config, "MAX_ROUNDS", 20)
             gs.ended_reason = None
             gs.game_type = game_type or ""
+            gs.language_code = language_code or "cn"  # 保存语言代码到状态
             gs.outline = ""
             gs.script = {}
             gs.assets = {}
@@ -1083,16 +1161,11 @@ class GameManager:
 
                 gs.game_type = game_type
                 # 直接生成大纲
-                generated_outline = self._generate_outline(text, game_type)
+                generated_outline = self._generate_outline(text, game_type, gs.language_code)
                 gs.outline = generated_outline
                 gs.progress = Progress.AWAITING_OUTLINE_REVIEW
 
-                outline_msg = (
-                    f"📝 我已根据你的输入生成了以下剧情大纲：\n\n"
-                    f"{generated_outline}\n\n"
-                    f"你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，"
-                    f"或者发送修改后的大纲内容来替换它。"
-                )
+                outline_msg = get_system_message("outline_generated", gs.language_code, outline=generated_outline)
                 self.game.messages.append(
                     Message(role="ai", player_name="主持人", content=outline_msg, is_system=False)
                 )
@@ -1103,12 +1176,7 @@ class GameManager:
                 self._log_flow("大纲生成完成", "等待用户审核/修改")
                 return self._build_status_response()
 
-            start_msg = (
-                "🎮 已开始新游戏。\n\n请在下方输入**几句话**描述你的游戏想法（可以是零散的想法、关键词、场景描述等）。例如：\n"
-                "- 赛博朋克、侦探、记忆交易、失踪案\n"
-                "- 中世纪、小镇、瘟疫、教会阴谋\n\n"
-                "我会根据你的输入生成一个详细的剧情大纲，你可以修改后再确认生成游戏。"
-            )
+            start_msg = get_system_message("game_started", gs.language_code)
             self.game.messages.append(
                 Message(role="ai", player_name="主持人", content=start_msg, is_system=True)
             )
@@ -1152,16 +1220,11 @@ class GameManager:
 
             # 1) 等待初始输入：生成大纲
             if gs.progress == Progress.AWAITING_INITIAL_INPUT:
-                generated_outline = self._generate_outline(text, gs.game_type)
+                generated_outline = self._generate_outline(text, gs.game_type, gs.language_code)
                 gs.outline = generated_outline
                 gs.progress = Progress.AWAITING_OUTLINE_REVIEW
                 
-                outline_msg = (
-                    f"📝 我已根据你的输入生成了以下剧情大纲：\n\n"
-                    f"{generated_outline}\n\n"
-                    f"你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，"
-                    f"或者发送修改后的大纲内容来替换它。"
-                )
+                outline_msg = get_system_message("outline_generated", gs.language_code, outline=generated_outline)
                 self.game.messages.append(
                     Message(
                         role="ai",
@@ -1189,7 +1252,7 @@ class GameManager:
                     # 使用当前大纲生成游戏
                     final_outline = gs.outline
                     # 添加确认提示消息
-                    confirm_msg = "✅ 已确认，正在生成游戏剧本..."
+                    confirm_msg = get_system_message("confirm_generating", gs.language_code)
                     self.game.messages.append(
                         Message(
                             role="ai",
@@ -1202,10 +1265,7 @@ class GameManager:
                     # 用户修改了大纲，更新 outline
                     final_outline = text
                     gs.outline = text
-                    update_msg = (
-                        f"✅ 大纲已更新。发送「确认」或「开始」来生成游戏，"
-                        f"或继续修改大纲。"
-                    )
+                    update_msg = get_system_message("outline_updated", gs.language_code)
                     self.game.messages.append(
                         Message(
                             role="ai",
@@ -1226,11 +1286,11 @@ class GameManager:
                     return self._build_status_response()
                 
                 # 确认后先生成剧本，再构建世界
-                script = self._generate_script(final_outline, gs.game_type)
+                script = self._generate_script(final_outline, gs.game_type, gs.language_code)
                 gs.script = script
                 
                 # 构建世界
-                built = self._build_world(script, gs.game_type)
+                built = self._build_world(script, gs.game_type, gs.language_code)
 
                 gs.assets = built.get("assets", {}) or {}
                 gs.story_state = built.get("initial_state", {}) or {}
@@ -1342,7 +1402,18 @@ class GameManager:
             if event_used:
                 director_prompt += f"\n\n【本回合触发事件】{event_used.event_id}：{event_used.narrative_template}\n请据此强化叙事氛围，但仍由你输出完整叙事推进剧情。"
                 self._log_flow("事件触发", f"{event_used.event_id} → 注入导演提示，LLM 继续输出")
-            system_content = TURN_ENGINE_SYSTEM_PROMPT + "\n\n" + director_prompt
+            
+            # 根据 language_code 添加语言要求
+            language_code = gs.language_code or "en"
+            # language_map = {
+            #     "cn": "中文",
+            #     "en": "English",
+            #     "zh": "中文",
+            # }
+            # language_name = language_map.get(language_code.lower(), "中文")
+            language_instruction = f"\n\n【重要语言要求】\n你必须使用language_code: {language_code}输出所有内容。包括：\n- narration（场景描述）\n- sound（声音描述）\n- dialogues[].text（NPC对话）\n- hooks.player_goal（行动建议）\n所有文本内容都必须使用 {language_code}，不得混用其他语言。"
+            
+            system_content = TURN_ENGINE_SYSTEM_PROMPT + language_instruction + "\n\n" + director_prompt
             raw = self._call_openai(
                 model=self.turn_model,
                 messages=[
@@ -1786,6 +1857,7 @@ class GameManager:
             gs.round_count = 0
             gs.max_rounds = getattr(config, "MAX_ROUNDS", 200)
             gs.ended_reason = None
+            gs.language_code = language_code  # 保存语言代码到状态
             
             # 获取官方游戏设定
             prompts, game_type = get_official_game_prompt(game_id, language_code)
@@ -1793,7 +1865,7 @@ class GameManager:
             
             # 2. 生成游戏大纲
             self._log_flow("官方游戏", f"开始生成大纲，game_id={game_id}, language={language_code}")
-            generated_outline = self._generate_outline(prompts, game_type)
+            generated_outline = self._generate_outline(prompts, game_type, language_code)
             gs.outline = generated_outline
             gs.progress = Progress.AWAITING_OUTLINE_REVIEW
             

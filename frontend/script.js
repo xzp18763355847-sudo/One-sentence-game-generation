@@ -12,6 +12,7 @@ const sendBtn = document.getElementById('sendBtn');
 const startBtn = document.getElementById('startBtn');
 const endBtn = document.getElementById('endBtn');
 const gameTypeSelect = document.getElementById('gameType');
+const languageCodeSelect = document.getElementById('languageCode');
 const gameStateEl = document.getElementById('gameState');
 const chapterInfoEl = document.getElementById('chapterInfo');
 const roundCountEl = document.getElementById('roundCount');
@@ -420,9 +421,12 @@ function updateGameUI(data, options) {
     sendBtn.disabled = questionInput.disabled;
   }
 
-  // 游戏进行中不允许切换类型
+  // 游戏进行中不允许切换类型和语言
   if (gameTypeSelect) {
     gameTypeSelect.disabled = isPlaying;
+  }
+  if (languageCodeSelect) {
+    languageCodeSelect.disabled = isPlaying;
   }
 
   // 根据阶段切换 placeholder
@@ -460,12 +464,14 @@ async function startGame() {
   showLoading(true);
   try {
     const game_type = (gameTypeSelect && gameTypeSelect.value) ? String(gameTypeSelect.value) : 'story_chapter';
+    const language_code = (languageCodeSelect && languageCodeSelect.value) ? String(languageCodeSelect.value) : 'cn';
     const initialText = questionInput.value.trim();
-    const body = { game_type };
+    const body = { game_type, language_code };
     if (initialText) {
       body.text = initialText;
     }
     const data = await apiCall('/start', 'POST', body);
+    // const data = await apiCall('/start_offcial_game', 'POST', body);
     updateGameUI(data);
   } catch (e) {
     alert('启动失败: ' + e.message);

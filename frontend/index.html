@@ -111,7 +111,14 @@
                     <option value="companion_open">角色陪伴：开放式（无结局）</option>
                 </select>
             </div>
-            <div class="game-type-hint">提示：类型只影响“大纲/剧本/章节”生成方式，开始后不可切换。</div>
+            <div class="game-type-row">
+                <label for="languageCode" class="game-type-label">语言</label>
+                <select id="languageCode" class="game-type-select">
+                    <option value="cn" selected>中文</option>
+                    <option value="en">English</option>
+                </select>
+            </div>
+            <div class="game-type-hint">提示：类型只影响"大纲/剧本/章节"生成方式，开始后不可切换。</div>
         </div>
         <div class="control-buttons">
             <button id="startBtn" class="btn btn-primary">

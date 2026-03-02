@@ -32,16 +32,18 @@ OUTLINE_GENERATOR_SYSTEM_PROMPT = """
 5. 根据游戏类型调整大纲内容：
    - 角色陪伴类：重点突出角色设定、互动方式、关系发展
    - 剧情游戏类：重点突出剧情线索、章节结构、冲突发展
+6. 【重要】必须使用指定的语言输出（language_code 会通过用户提示提供）
 """.strip()
 
 
-def build_outline_prompt(user_input: str, game_type: str) -> str:
+def build_outline_prompt(user_input: str, game_type: str, language_code: str = "cn") -> str:
     """
     构建大纲生成提示词
     
     参数:
         user_input: 用户输入的文本
         game_type: 游戏类型
+        language_code: 语言代码（cn=中文, en=英文）
         
     返回:
         提示词字符串
@@ -49,13 +51,21 @@ def build_outline_prompt(user_input: str, game_type: str) -> str:
     game_info = get_game_type_info(game_type)
     game_name = game_info.get("name", "剧情游戏")
     
+    language_map = {
+        "cn": "中文",
+        "en": "English",
+        "zh": "中文",
+    }
+    language_name = language_map.get(language_code.lower(), "中文")
+    
     prompt = f"""
 用户输入：
 {user_input}
 
 游戏类型：{game_name}
+输出语言：{language_name}（language_code: {language_code}）
 
-请根据以上内容生成一个详细的剧情游戏大纲。
+【重要】请使用 {language_name} 生成一个详细的剧情游戏大纲。所有输出内容（包括背景设定、角色描述、情节线索等）都必须使用 {language_name}。
 """
     return prompt.strip()
 
@@ -115,16 +125,19 @@ SCRIPT_GENERATOR_SYSTEM_PROMPT = """
    - 无章节的游戏：可以为空数组或只有一个开放式章节
 
 5. 只输出 JSON，不要添加任何解释或注释
+
+6. 【重要】必须使用指定的语言输出（language_code 会通过用户提示提供）。JSON 中的所有文本内容（包括 introduction、info、rules、关系描述、角色介绍等）都必须使用指定语言。
 """.strip()
 
 
-def build_script_prompt(outline: str, game_type: str) -> str:
+def build_script_prompt(outline: str, game_type: str, language_code: str = "cn") -> str:
     """
     构建剧本生成提示词
     
     参数:
         outline: 剧情大纲
         game_type: 游戏类型
+        language_code: 语言代码（cn=中文, en=英文）
         
     返回:
         提示词字符串
@@ -134,6 +147,13 @@ def build_script_prompt(outline: str, game_type: str) -> str:
     has_ending = game_info.get("has_ending", True)
     has_chapters = game_info.get("has_chapters", False)
     
+    language_map = {
+        "cn": "中文",
+        "en": "English",
+        "zh": "中文",
+    }
+    language_name = language_map.get(language_code.lower(), "中文")
+    
     prompt = f"""
 玩家剧情大纲 outline：
 {outline}
@@ -141,8 +161,9 @@ def build_script_prompt(outline: str, game_type: str) -> str:
 游戏类型：{game_name}
 是否有结局：{'是' if has_ending else '否'}
 是否有章节：{'是' if has_chapters else '否'}
+输出语言：{language_name}（language_code: {language_code}）
 
-请根据以上内容生成游戏剧本。只输出 JSON。
+【重要】请使用 {language_name} 生成游戏剧本。JSON 中的所有文本内容（包括 introduction、info、rules、关系描述、角色介绍、章节介绍等）都必须使用 {language_name}。只输出 JSON。
 """
     return prompt.strip()
 
@@ -161,6 +182,8 @@ WORLD_BUILDER_SYSTEM_PROMPT = """
 - "first_scene_prompt": "..."  （第一场景的提示）
 - "game_genre": 字符串，根据剧情大纲推断游戏类型，取值：mystery（解密推理）、romance（恋爱）、exploration（探索）、adventure（冒险）、story（一般剧情）、mixed（混合）。无法判断则填 "story"。
 - "chapters": [...]  （章节列表，每个章节包含：title（章节标题）、goal（章节目标，简短明确）、description（章节描述））
+
+【重要】必须使用指定的语言输出（language_code 会通过用户提示提供）。JSON 中的所有文本内容（包括 assets 中的描述、player_facing_introduction、first_scene_prompt、chapters 中的标题和描述等）都必须使用指定语言。
 
 【状态结构要求（必须遵守）】
 initial_state 必须包含以下顶层字段（可根据游戏类型选择）：
@@ -202,13 +225,14 @@ initial_state 必须包含以下顶层字段（可根据游戏类型选择）：
 """.strip()
 
 
-def build_world_builder_prompt(script: dict, game_type: str) -> str:
+def build_world_builder_prompt(script: dict, game_type: str, language_code: str = "cn") -> str:
     """
     构建世界构建器提示词
     
     参数:
         script: 游戏剧本字典
         game_type: 游戏类型
+        language_code: 语言代码（cn=中文, en=英文）
         
     返回:
         提示词字符串
@@ -219,12 +243,20 @@ def build_world_builder_prompt(script: dict, game_type: str) -> str:
     is_companion_route = game_type == GameType.COMPANION_ROUTE.value
     is_companion_open = game_type == GameType.COMPANION_OPEN.value
     
+    language_map = {
+        "cn": "中文",
+        "en": "English",
+        "zh": "中文",
+    }
+    language_name = language_map.get(language_code.lower(), "中文")
+    
     prompt = f"""
 游戏剧本：
 {json.dumps(script, ensure_ascii=False, indent=2)}
 
 游戏类型：{game_info.get('name', '剧情游戏')}
 是否有章节：{'是' if has_chapters else '否'}
+输出语言：{language_name}（language_code: {language_code}）
 """
     
     if is_companion_route or is_companion_open:
@@ -243,8 +275,8 @@ def build_world_builder_prompt(script: dict, game_type: str) -> str:
 3. 这是开放式陪伴类游戏，npc 可以包含 affection 字段（好感度，0-100），但这不是游戏目标
 """
     
-    prompt += """
-请根据以上剧本生成世界资产与初始状态。只输出 JSON。
+    prompt += f"""
+【重要】请使用 {language_name} 生成世界资产与初始状态。JSON 中的所有文本内容（包括 assets 中的描述、player_facing_introduction、first_scene_prompt、chapters 中的标题和描述、initial_state 中的字符串字段等）都必须使用 {language_name}。只输出 JSON。
 """
     return prompt.strip()
 
