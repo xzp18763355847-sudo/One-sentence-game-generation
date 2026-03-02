@@ -115,8 +115,8 @@ def start_offcial_game():
     """
     data = request.get_json(silent=True) or {}
     group_id = _get_group_id(data)
-    # game_id = data.get("game_id", "").strip()
-    game_id = data.get("text", "").strip()
+    game_id = data.get("game_id", "").strip()
+    # game_id = data.get("text", "").strip()
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
         return jsonify({"error": f"无效的游戏ID: {game_id}"}), 400
     # language_code = data.get("language_code", "cn").strip()
