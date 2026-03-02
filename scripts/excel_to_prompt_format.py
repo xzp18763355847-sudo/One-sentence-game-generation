@@ -10,13 +10,13 @@
   python excel_to_prompt_format.py data.tsv --format tsv --no-header
 
 scripts.xlsx 列布局（与项目内 scripts.xlsx 一致，0-based 列索引）:
-  0: 分类(不参与输出)  1: 剧本名称(中文)  2: 剧本名称(英文)
-  3: 欢迎语/游戏规则/游戏简介(中文)  4: (英文)
-  5: 故事背景/开场(中文)  6: (英文)
-  7: 角色设定/角色卡(中文)  8: (英文)
-  9: 规则补充(中文)  10: (英文)
-  11,12: 预填回复(不写入)  13: 故事背景和人物设定修改(不写入)
-  14: 扮演NPC名称(role)  15: 玩法(type)
+  0: 分类(不参与输出)  1: 剧本名称(中文)  2: 剧本名称(英文) 3: 游戏代码
+  4: 欢迎语/游戏规则/游戏简介(中文)  5: (英文)
+  6: 故事背景/开场(中文)  7: (英文)
+  8: 角色设定/角色卡(中文)  9: (英文)
+  10: 规则补充(中文)  11: (英文)
+  12,13: 预填回复(不写入)  14: 故事背景和人物设定修改(不写入)
+  15: 扮演NPC名称(role)  16: 玩法(type)
 """
 
 import argparse
@@ -24,20 +24,22 @@ import csv
 import sys
 from pathlib import Path
 
-# scripts.xlsx 列索引（0-based，与 Excel 第 A 列=0 对应）
+# scripts.xlsx 列索引（0-based，与 Excel 列对应，A=0）
+# D列(索引3)为游戏代码
 COLS_XLSX = {
-    "name_cn": 1,
-    "name_en": 2,
-    "rule_cn": 3,
-    "rule_en": 4,
-    "background_cn": 5,
-    "background_en": 6,
-    "role_setting_cn": 7,
-    "role_setting_en": 8,
-    "rule_extra_cn": 9,
-    "rule_extra_en": 10,
-    "role": 14,
-    "type": 15,
+    "game_code": 3,        # 游戏代码（工作流调用），作为 entry_id
+    "name_cn": 1,          # B列: 剧本名称(中文)
+    "name_en": 2,          # C列: 剧本名称(英文)
+    "rule_cn": 4,          # E列: 欢迎语/游戏规则/游戏简介(中文)
+    "rule_en": 5,          # F列: (英文)
+    "background_cn": 6,   # G列: 故事背景/开场(中文)
+    "background_en": 7,   # H列: (英文)
+    "role_setting_cn": 8, # I列: 角色设定/角色卡(中文)
+    "role_setting_en": 9,  # J列: (英文)
+    "rule_extra_cn": 10,   # K列: 规则补充(中文)
+    "rule_extra_en": 11,  # L列: (英文)
+    "role": 15,            # P列: 扮演NPC名称(role)
+    "type": 16,           # Q列: 玩法(type)
 }
 
 # TSV 无表头时的列顺序（0-based）
@@ -74,10 +76,17 @@ def _escape(s: str) -> str:
 
 
 def row_to_entry(row: list, entry_id: str, cols: dict[str, int]) -> dict:
-    """将一行（列表）转为 OFFCIAL_GAME_PROMPT 单条目的结构。cols 为列名到 0-based 索引的映射。"""
+    """将一行（列表）转为 OFFCIAL_GAME_PROMPT 单条目的结构。cols 为列名到 0-based 索引的映射。
+    
+    如果 cols 中存在 game_code，则使用游戏代码作为 entry_id；否则使用传入的 entry_id。
+    """
     def col(key: str) -> str:
         i = cols.get(key, -1)
         return _strip(row[i]) if 0 <= i < len(row) else ""
+
+    game_code = col("game_code")
+    if game_code:
+        entry_id = game_code
 
     name_cn = col("name_cn")
     name_en = col("name_en")
@@ -170,15 +179,9 @@ def main():
     suffix = path.suffix.lower()
     if suffix in (".xlsx", ".xls"):
         rows = read_xlsx(path)
-        cols = COLS_XLSX
         has_header = True  # scripts.xlsx 首行为表头
     elif suffix == ".tsv" or suffix == ".txt":
         rows = read_tsv(path)
-        fmt = args.format
-        if fmt == "xlsx":
-            cols = COLS_XLSX
-        else:
-            cols = COLS_TSV
         has_header = not args.no_header
     else:
         print("仅支持 .tsv / .txt / .xlsx", file=sys.stderr)
@@ -195,7 +198,7 @@ def main():
     for i, row in enumerate(data_rows):
         num = args.start_id + i
         entry_id = f"{args.id_prefix}{num:03d}"
-        entry = row_to_entry(row, entry_id, cols)
+        entry = row_to_entry(row, entry_id, COLS_XLSX if suffix in (".xlsx", ".xls") else COLS_TSV)
         out_lines.append(format_entry_python(entry))
 
     result = "\n".join(out_lines)
