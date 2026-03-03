@@ -1105,7 +1105,19 @@ class GameManager:
             #     "zh": "中文",
             # }
             # language_name = language_map.get(language_code.lower(), "中文")
-            language_instruction = f"\n\n【重要语言要求】\n你必须使用language_code: {language_code}输出所有内容。包括：\n- narration（场景描述）\n- sound（声音描述）\n- dialogues[].text（NPC对话）\n- hooks.player_goal（行动建议）\n所有文本内容都必须使用 {language_code}，不得混用其他语言。"
+            # language_instruction = f"\n\n【重要语言要求】\n你必须使用language_code: {language_code}输出所有内容。包括：\n- narration（场景描述）\n- sound（声音描述）\n- dialogues[].text（NPC对话）\n- hooks.player_goal（行动建议）\n所有文本内容都必须使用 {language_code}，不得混用其他语言。"
+            language_instruction = (
+                f"\n\n【重要语言要求】\n"
+                f"你必须使用language_code: {language_code}输出所有内容。包括：\n"
+                f"- narration（场景描述）\n"
+                f"- sound（声音描述）\n"
+                f"- dialogues[].text（NPC对话）\n"
+                f"- hooks.player_goal（行动建议）\n"
+                f"所有文本内容都必须使用 {language_code}，不得混用其他语言。\n\n"
+                f"【重要结构要求】\n"
+                f"- dialogues 字段必须是一个数组，但最多只包含 1 条 NPC 对话；如果你有多句想说的话，请把它们合并到同一条 text 里，用换行或合适的分句连接。\n"
+                f"- 严禁在同一轮输出多条 NPC 对话对象（即 dialogues.length 不能大于 1）。"
+            )
 
             system_content = TURN_ENGINE_SYSTEM_PROMPT + language_instruction + "\n\n" + director_prompt
             start = time.time()
@@ -1141,6 +1153,13 @@ class GameManager:
                 sound = ""
             if not isinstance(dialogues, list):
                 dialogues = []
+
+            # 强制限定：每轮最多只保留 1 条 NPC 对话，避免模型输出多条导致前端展示两轮
+            if isinstance(dialogues, list) and len(dialogues) > 1:
+                logger.warning(
+                    f"[turn_engine] dialogues 超过 1 条（{len(dialogues)}），仅保留第一条。"
+                )
+                dialogues = dialogues[:1]
             if not isinstance(hooks, dict):
                 hooks = {}
             if not isinstance(hooks.get("player_goal"), str):
