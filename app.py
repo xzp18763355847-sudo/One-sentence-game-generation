@@ -54,8 +54,8 @@ class StartGameRequest(BaseModel):
 
 class StartOfficialGameRequest(BaseModel):
     group_id: str = DEFAULT_GROUP_ID
-    text: str  # 这里实际是 game_id
-    language_code: str = "en"
+    game_id: str  # 这里实际是 game_id
+    # language_code: str = "en"
 
 
 class SendMessageRequest(BaseModel):
