@@ -74,13 +74,31 @@ async def start_official_game(
 ) -> Any:
     """开始官方游戏."""
     gid = (req.group_id or "").strip() or DEFAULT_GROUP_ID
-    if req.game_id not in OFFCIAL_GAME_PROMPT:
-        raise HTTPException(status_code=400, detail=f"无效的游戏ID: {req.game_id}")
-    logger.info("POST /api/start_offcial_game group_id=%s game_id=%s", gid, req.game_id)
+    game_id = req.text
+    if game_id not in OFFCIAL_GAME_PROMPT:
+        raise HTTPException(status_code=400, detail=f"无效的游戏ID: {game_id}")
+    logger.info("POST /api/start_official_game group_id=%s game_id=%s", gid, game_id)
+    # 检测是否为预设游戏ID，如果是则直接加载预设游戏，跳过模型生成
+    if game_id in PRESET_GAME_SNAPSHOTS:
+        logger.info(f"检测到预设游戏ID ({game_id})，直接加载预设游戏数据，跳过模型生成")
+        preset_snapshot = PRESET_GAME_SNAPSHOTS[game_id]
+
+        # 使用事务加载预设游戏并保存到对应的 group_id 快照文件
+        async def _load_preset_game():
+            # 从预设游戏快照创建 Game 对象
+            game_manager.game = Game.from_snapshot(preset_snapshot)
+            logger.info(f"预设游戏已加载到内存")
+
+        # 使用事务保存预设游戏
+        await game_manager._with_txn_for_group(gid, _load_preset_game)
+
+        # 返回游戏状态
+        result = await game_manager.get_status(gid)
+        return JSONResponse(result)
     return await asyncio.to_thread(
         gm.create_official_game,
         group_id=gid,
-        game_id=req.game_id,
+        game_id=req.text,
         language_code=req.language_code or "en",
     )
 

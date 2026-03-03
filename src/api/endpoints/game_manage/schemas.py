@@ -16,7 +16,7 @@ class StartOfficialGameRequest(BaseModel):
     """开始官方游戏请求."""
 
     group_id: str = "group001"
-    game_id: str
+    text: str
     language_code: str = "en"
 
 

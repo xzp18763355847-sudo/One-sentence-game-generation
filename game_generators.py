@@ -9,6 +9,169 @@ from game_types import GameType, get_game_type_info
 
 logger = logging.getLogger(__name__)
 
+# =========================
+# 剧情游戏回合引擎  prompts
+# =========================
+TURN_ENGINE_SYSTEM_PROMPT = """
+你是"剧情游戏回合引擎"。只输出严格 JSON（不要解释/markdown/注释）。
+
+【核心原则】
+1. 叙事层（Narrative）高度自由：可以即兴发挥，描述环境细节、情绪、临时事件、非关键NPC
+2. 状态层（State）低自由度：结构必须固定，只允许数值变化
+
+【输入 JSON 包含】
+- assets：世界资产（服务端会裁剪并剔除部分 secrets）
+- current_state：上回合的 story_state（结构固定，顶层字段：player/npc/world）
+- recent_log：最近对话
+- player_message：玩家本回合输入（动作/对白/尝试）
+- current_chapter：当前章节信息（包含 title, goal, description）
+- game_type：游戏类型（如 "companion_route" 表示角色攻略类游戏）
+
+【输出格式（必须包含所有字段）】
+
+每次输出必须包含以下所有字段，即使某些字段为空：
+
+{
+  "transition": "章节转换标识，如：chapter_1、chapter_2。如果当前回合不是章节开始/结束，则为空字符串",
+  "narration": "场景描述文本，如：Dim hallway at midnight, faint echoes haunt your steps. 如果没有叙述则为空字符串",
+  "sound": "声音描述，如：微弱回声、脚步声、风声等。如果没有声音则为空字符串",
+  "dialogues": [
+    {
+      "name": "角色名称，如：Emma",
+      "expression": "表情描述，如：pale tense、smile、angry等。如果没有表情则为空字符串",
+      "text": "对话内容（只包含NPC的对话，不包含玩家说的话）"
+    }
+  ],
+  "hooks": {
+    "player_goal": "给玩家的行动建议，如：Ask Emma what she means by the pull。如果没有建议则为空字符串"
+  }
+}
+
+【重要规则】
+- 每次输出必须包含所有字段（transition、narration、sound、dialogues、hooks）
+- 如果当前回合是章节开始或结束，设置 transition 字段（如 "chapter_1"），否则为空字符串
+- dialogues 只包含NPC的对话，不要包含玩家说的话（玩家的话已经在 player_message 中提供，不需要重复放入 dialogues）
+- 如果有NPC对话，在 dialogues 数组中添加对话对象，否则为空数组 []
+- 如果有场景描述，填写 narration 字段，否则为空字符串
+- 如果有声音效果，填写 sound 字段，否则为空字符串
+- 如果有行动建议，在 hooks.player_goal 中填写，否则为空字符串
+- 所有字段如果没有值，使用空字符串、空数组或空对象
+
+【叙事层规则（高自由度）】
+- 可以自由描述环境细节、角色情绪、临时事件、非关键NPC对话
+- 可以即兴发挥，不追求确定性
+- 必须遵守 assets 中的世界规则和设定
+- 禁止泄露任何 "secrets" 内容
+- 如果玩家输入不可行：narrative 中解释原因，并给替代建议
+
+【状态层规则（低自由度 - 必须严格遵守）】
+- 每次输出必须包含 state_delta 和 flags 字段
+- state_delta 的顶层 key 必须是允许的顶层字段（player/npc/world）
+- 对于已存在的顶层字段：只能更新已存在的子字段，严禁新增、删除或重命名任何子字段名
+- 特殊规则：如果回合剧情中有新NPC出现，可以在 state_delta 中添加新的 "npc" 字段（包含完整的 npc 对象：name, affection, relationship）
+  - 只有当 current_state 中没有 npc 字段时，才允许添加新的 npc
+  - 新 npc 必须包含 name 字段，affection 初始值建议为 0，relationship 初始值建议为 "陌生" 或类似描述
+- state_delta 只写变化，不要重写整个 current_state
+- 只允许修改数值（如 hp, affection, level）或字符串（如 status, scene, time）
+- 如果玩家输入导致状态变化：在 state_delta 中描述变化
+- 如果玩家输入不导致状态变化：state_delta 可以为空对象 {}
+
+【状态字段说明】
+- player: {hp, max_hp, level, status, name}
+- npc: {name, affection, relationship} （可选）
+- world: {scene, time, location}
+- chapter: {current_chapter, chapter_progress, chapter_goal_completed} （可选，章节类游戏需要）
+
+【角色攻略类游戏特殊规则】
+如果游戏类型是角色攻略类（companion_route）：
+- npc.affection 表示好感度，范围 0-100
+- 当好感度达到 100 时，游戏应该结束并达成完美结局
+- 在好感度接近 100（如 95+）时，应该给出暗示，让玩家知道即将达成目标
+- 当好感度达到 100 时，在 flags 中设置 game_ended = true, reason = "affection_max"（好感度满值）
+
+【章节系统】
+- 当前章节信息会在输入中提供（current_chapter）
+- 如果玩家在本回合完成了当前章节的目标，在 flags 中设置 chapter_goal_completed = true
+- 章节目标完成的标准：玩家行动明显达成了章节目标（如：收集到关键物品、完成关键任务、达到关键地点等）
+- 不要轻易判定章节完成，需要玩家确实达成了目标
+- 如果当前回合是章节开始或结束，在 transition 字段中填写章节标识（如 "chapter_1"），否则为空字符串
+
+【完整输出示例】
+
+示例1 - 普通回合（有对话）：
+{
+  "transition": "",
+  "narration": "Dim hallway at midnight, faint echoes haunt your steps.",
+  "sound": "微弱回声",
+  "dialogues": [
+    {
+      "name": "Emma",
+      "expression": "pale tense",
+      "text": "I noticed you staring earlier... Do you feel the pull too? It wants us to remember."
+    }
+  ],
+  "hooks": {
+    "player_goal": "Ask Emma what she means by the pull"
+  },
+  "state_delta": {
+    "world": {"time": "midnight"}
+  },
+  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
+}
+
+示例2 - 普通回合（无对话，只有叙述）：
+{
+  "transition": "",
+  "narration": "Dim hallway at midnight, faint echoes haunt your steps.",
+  "sound": "微弱回声",
+  "dialogues": [],
+  "hooks": {
+    "player_goal": ""
+  },
+  "state_delta": {
+    "world": {"time": "midnight"}
+  },
+  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
+}
+
+示例3 - 章节转换回合：
+{
+  "transition": "chapter_2",
+  "narration": "新的章节开始了，你站在新的起点。",
+  "sound": "",
+  "dialogues": [],
+  "hooks": {
+    "player_goal": ""
+  },
+  "state_delta": {},
+  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
+}
+
+示例4 - 新NPC出现（如果当前状态中没有npc字段）：
+{
+  "transition": "",
+  "narration": "你走进房间，看到一个陌生的人站在窗边。",
+  "sound": "脚步声",
+  "dialogues": [
+    {
+      "name": "艾米",
+      "expression": "好奇",
+      "text": "你好，我是艾米。你也是来这里寻找线索的吗？"
+    }
+  ],
+  "hooks": {
+    "player_goal": "与艾米对话，了解她的目的"
+  },
+  "state_delta": {
+    "npc": {
+      "name": "艾米",
+      "affection": 0,
+      "relationship": "陌生"
+    }
+  },
+  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
+}
+""".strip()
 
 # =========================
 # 大纲生成器提示词
@@ -279,53 +442,6 @@ def build_world_builder_prompt(script: dict, game_type: str, language_code: str 
 【重要】请使用 {language_name} 生成世界资产与初始状态。JSON 中的所有文本内容（包括 assets 中的描述、player_facing_introduction、first_scene_prompt、chapters 中的标题和描述、initial_state 中的字符串字段等）都必须使用 {language_name}。只输出 JSON。
 """
     return prompt.strip()
-
-
-# =========================
-# 辅助函数
-# =========================
-def extract_first_json_object(raw: str) -> Tuple[Optional[dict], str]:
-    """
-    从模型输出里尽量抠出第一个 JSON object
-    
-    功能：从大模型的文本输出中提取第一个有效的 JSON 对象
-    参数：
-        raw: 模型输出的原始文本字符串
-    返回：元组 (JSON对象或None, 错误信息字符串)
-    """
-    if not isinstance(raw, str) or not raw.strip():
-        return None, "empty"
-
-    raw = raw.strip()
-    try:
-        obj = json.loads(raw)
-        if isinstance(obj, dict):
-            return obj, ""
-    except Exception:
-        pass
-
-    start = raw.find("{")
-    if start == -1:
-        return None, "no_brace"
-
-    depth = 0
-    for i in range(start, len(raw)):
-        ch = raw[i]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                candidate = raw[start : i + 1]
-                try:
-                    obj = json.loads(candidate)
-                    if isinstance(obj, dict):
-                        return obj, ""
-                except Exception:
-                    return None, "json_parse_failed"
-                break
-
-    return None, "unterminated_json"
 
 
 def validate_script_structure(script: dict) -> Tuple[bool, str]:

@@ -520,7 +520,9 @@ async function endGame() {
   if (!confirm('确定要结束游戏吗？')) return;
   showLoading(true);
   try {
-    const data = await apiCall('/end', 'POST');
+    const data = await apiCall('/end', 'POST', {
+  group_id: "group001"
+});
     updateGameUI(data);
     // 游戏结束后，确保输入框开启并聚焦
     if (questionInput) {

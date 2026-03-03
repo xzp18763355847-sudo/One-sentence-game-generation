@@ -1,0 +1,45 @@
+# =========================
+# 系统消息国际化字典
+# =========================
+SYSTEM_MESSAGES = {
+    "cn": {
+        "outline_generated": "📝 我已根据你的输入生成了以下剧情大纲：\n\n{outline}\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
+        "game_started": "🎮 已开始新游戏。\n\n请在下方输入**几句话**描述你的游戏想法（可以是零散的想法、关键词、场景描述等）。例如：\n- 赛博朋克、侦探、记忆交易、失踪案\n- 中世纪、小镇、瘟疫、教会阴谋\n\n我会根据你的输入生成一个详细的剧情大纲，你可以修改后再确认生成游戏。",
+        "confirm_generating": "✅ 已确认，正在生成游戏剧本...",
+        "outline_updated": "✅ 大纲已更新。发送「确认」或「开始」来生成游戏，或继续修改大纲。",
+        "chapter_start": "📖 {title}：开始",
+        "chapter_goal": "🎯 本章目标：{goal}",
+        "chapter_end": "✨ {title}：结束\n\n",
+        "chapter_completed": "🎉 恭喜！你已完成本章目标：{goal}\n\n",
+        "all_chapters_completed": "🏁 所有章节已完成！故事即将迎来结局...",
+        "story_continues": "故事继续...",
+        "round_waiting": "📖 第 {round} 回合：\n\n（等待剧情推进...）",
+        "game_ended_affection": "💕 恭喜！你与{name}的好感度已达到满值（100），达成了完美结局！",
+        "game_ended_reason": "🏁 故事结束（原因：{reason}）",
+        "ending_label": "结局：{ending_id}",
+        "restart_hint": "你可以点击「开始游戏」重开。",
+        "game_ended_manual": "🏁 已结束游戏。你可以点击「开始游戏」重开。",
+        "sound_label": "[声音：{sound}]",
+        "try_action": "\n你可以尝试：{goal}",
+    },
+    "en": {
+        "outline_generated": "📝 I have generated the following story outline based on your input:\n\n{outline}\n\nYou can send 'confirm' or 'start' to use this outline to generate the game, or send a modified outline to replace it.",
+        "game_started": "🎮 A new game has started.\n\nPlease enter a few sentences describing your game idea below (can be scattered ideas, keywords, scene descriptions, etc.). For example:\n- Cyberpunk, detective, memory trading, missing case\n- Medieval, small town, plague, church conspiracy\n\nI will generate a detailed story outline based on your input, which you can modify before confirming to generate the game.",
+        "confirm_generating": "✅ Confirmed, generating game script...",
+        "outline_updated": "✅ Outline updated. Send 'confirm' or 'start' to generate the game, or continue modifying the outline.",
+        "chapter_start": "📖 {title}: Start",
+        "chapter_goal": "🎯 Chapter Goal: {goal}",
+        "chapter_end": "✨ {title}: End\n\n",
+        "chapter_completed": "🎉 Congratulations! You have completed this chapter's goal: {goal}\n\n",
+        "all_chapters_completed": "🏁 All chapters completed! The story is about to reach its conclusion...",
+        "story_continues": "The story continues...",
+        "round_waiting": "📖 Round {round}:\n\n(Waiting for story progression...)",
+        "game_ended_affection": "💕 Congratulations! Your affection with {name} has reached the maximum (100), achieving the perfect ending!",
+        "game_ended_reason": "🏁 Story ended (reason: {reason})",
+        "ending_label": "Ending: {ending_id}",
+        "restart_hint": "You can click 'Start Game' to restart.",
+        "game_ended_manual": "🏁 Game ended. You can click 'Start Game' to restart.",
+        "sound_label": "[Sound: {sound}]",
+        "try_action": "\nYou can try: {goal}",
+    }
+}

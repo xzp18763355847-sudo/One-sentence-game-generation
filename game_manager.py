@@ -25,15 +25,19 @@ import re
 import tempfile
 import threading
 import time
+import asyncio
 from enum import Enum
 from dataclasses import dataclass, field, asdict
-from typing import Any, Dict, List, Optional, Tuple, Callable, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Callable, TypeVar, Coroutine
+
+from game_statics.intern_map import SYSTEM_MESSAGES
+from utils.util import strip_secrets, atomic_write_json, get_system_message, extract_first_json_object
 
 # 每个工作线程独立保存当前正在处理的 Game 实例
 _tls = threading.local()
 
 import httpx
-from openai import OpenAI
+from openai import AsyncOpenAI
 import config
 from state_schema import StateSchema, safe_merge_state
 from narrative.state_models import NarrativeState
@@ -45,230 +49,51 @@ from narrative.engine import (
 )
 from narrative.prompt_builder import build_director_prompt, get_official_game_prompt
 from narrative.events import mark_events_triggered, apply_state_mutate
-from game_types import GameType, get_game_type_info, is_valid_game_type
+from game_types import get_game_type_info, is_valid_game_type
 from game_generators import (
     build_outline_prompt,
     build_script_prompt,
     build_world_builder_prompt,
-    extract_first_json_object as extract_json,
     validate_script_structure,
     normalize_script,
     OUTLINE_GENERATOR_SYSTEM_PROMPT,
     SCRIPT_GENERATOR_SYSTEM_PROMPT,
-    WORLD_BUILDER_SYSTEM_PROMPT,
+    WORLD_BUILDER_SYSTEM_PROMPT, TURN_ENGINE_SYSTEM_PROMPT,
 )
 
 # Linux 文件锁（gunicorn 多 worker 必备）
 import fcntl
 
-from log_config import get_logger
+from utils.log_config import get_logger
 
 logger = get_logger(__name__)
 
 T = TypeVar("T")
 
-# =========================
-# 系统消息国际化字典
-# =========================
-SYSTEM_MESSAGES = {
-    "cn": {
-        "outline_generated": "📝 我已根据你的输入生成了以下剧情大纲：\n\n{outline}\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
-        "game_started": "🎮 已开始新游戏。\n\n请在下方输入**几句话**描述你的游戏想法（可以是零散的想法、关键词、场景描述等）。例如：\n- 赛博朋克、侦探、记忆交易、失踪案\n- 中世纪、小镇、瘟疫、教会阴谋\n\n我会根据你的输入生成一个详细的剧情大纲，你可以修改后再确认生成游戏。",
-        "confirm_generating": "✅ 已确认，正在生成游戏剧本...",
-        "outline_updated": "✅ 大纲已更新。发送「确认」或「开始」来生成游戏，或继续修改大纲。",
-        "chapter_start": "📖 {title}：开始",
-        "chapter_goal": "🎯 本章目标：{goal}",
-        "chapter_end": "✨ {title}：结束\n\n",
-        "chapter_completed": "🎉 恭喜！你已完成本章目标：{goal}\n\n",
-        "all_chapters_completed": "🏁 所有章节已完成！故事即将迎来结局...",
-        "story_continues": "故事继续...",
-        "round_waiting": "📖 第 {round} 回合：\n\n（等待剧情推进...）",
-        "game_ended_affection": "💕 恭喜！你与{name}的好感度已达到满值（100），达成了完美结局！",
-        "game_ended_reason": "🏁 故事结束（原因：{reason}）",
-        "ending_label": "结局：{ending_id}",
-        "restart_hint": "你可以点击「开始游戏」重开。",
-        "game_ended_manual": "🏁 已结束游戏。你可以点击「开始游戏」重开。",
-        "sound_label": "[声音：{sound}]",
-        "try_action": "\n你可以尝试：{goal}",
-    },
-    "en": {
-        "outline_generated": "📝 I have generated the following story outline based on your input:\n\n{outline}\n\nYou can send 'confirm' or 'start' to use this outline to generate the game, or send a modified outline to replace it.",
-        "game_started": "🎮 A new game has started.\n\nPlease enter a few sentences describing your game idea below (can be scattered ideas, keywords, scene descriptions, etc.). For example:\n- Cyberpunk, detective, memory trading, missing case\n- Medieval, small town, plague, church conspiracy\n\nI will generate a detailed story outline based on your input, which you can modify before confirming to generate the game.",
-        "confirm_generating": "✅ Confirmed, generating game script...",
-        "outline_updated": "✅ Outline updated. Send 'confirm' or 'start' to generate the game, or continue modifying the outline.",
-        "chapter_start": "📖 {title}: Start",
-        "chapter_goal": "🎯 Chapter Goal: {goal}",
-        "chapter_end": "✨ {title}: End\n\n",
-        "chapter_completed": "🎉 Congratulations! You have completed this chapter's goal: {goal}\n\n",
-        "all_chapters_completed": "🏁 All chapters completed! The story is about to reach its conclusion...",
-        "story_continues": "The story continues...",
-        "round_waiting": "📖 Round {round}:\n\n(Waiting for story progression...)",
-        "game_ended_affection": "💕 Congratulations! Your affection with {name} has reached the maximum (100), achieving the perfect ending!",
-        "game_ended_reason": "🏁 Story ended (reason: {reason})",
-        "ending_label": "Ending: {ending_id}",
-        "restart_hint": "You can click 'Start Game' to restart.",
-        "game_ended_manual": "🏁 Game ended. You can click 'Start Game' to restart.",
-        "sound_label": "[Sound: {sound}]",
-        "try_action": "\nYou can try: {goal}",
-    }
-}
 
-
-def get_system_message(key: str, language_code: str = "cn", **kwargs) -> str:
+async def async_with_file_lock(lock_path: str, fn: Callable[[], T]) -> T:
     """
-    根据 language_code 获取系统消息
+    跨进程文件锁（Linux flock）异步版本
 
-    参数:
-        key: 消息键名
-        language_code: 语言代码（cn/en，默认cn）
-        **kwargs: 用于格式化消息的参数
-
-    返回:
-        格式化后的消息字符串
-    """
-    lang = language_code.lower() if language_code else "cn"
-    if lang not in ("cn", "en"):
-        lang = "cn"
-
-    message_template = SYSTEM_MESSAGES.get(lang, SYSTEM_MESSAGES["cn"]).get(key, "")
-    if not message_template:
-        # 如果找不到消息，尝试从中文获取
-        message_template = SYSTEM_MESSAGES["cn"].get(key, key)
-
-    return message_template.format(**kwargs) if kwargs else message_template
-
-
-# =========================
-# helpers
-# =========================
-def deep_merge(dst: dict, src: dict) -> dict:
-    """
-    递归合并：dict->dict 深合并，其它类型直接覆盖
-    
-    功能：将源字典深度合并到目标字典中，字典类型递归合并，其他类型直接覆盖
-    参数：
-        dst: 目标字典
-        src: 源字典
-    返回：合并后的字典
-    """
-    for k, v in src.items():
-        if isinstance(v, dict) and isinstance(dst.get(k), dict):
-            deep_merge(dst[k], v)
-        else:
-            dst[k] = v
-    return dst
-
-
-def strip_secrets(obj: Any) -> Any:
-    """
-    递归剔除任何层级的 secrets 字段
-    
-    功能：从对象中递归移除所有名为 "secrets" 的字段，避免敏感信息泄露
-    参数：
-        obj: 要处理的对象（可以是字典、列表或其他类型）
-    返回：处理后的对象，所有 secrets 字段已被移除
-    """
-    if isinstance(obj, dict):
-        out = {}
-        for k, v in obj.items():
-            if k == "secrets":
-                continue
-            out[k] = strip_secrets(v)
-        return out
-    if isinstance(obj, list):
-        return [strip_secrets(x) for x in obj]
-    return obj
-
-
-def extract_first_json_object(raw: str) -> Tuple[Optional[dict], str]:
-    """
-    从模型输出里尽量抠出第一个 JSON object
-    
-    功能：从大模型的文本输出中提取第一个有效的 JSON 对象
-    参数：
-        raw: 模型输出的原始文本字符串
-    返回：元组 (JSON对象或None, 错误信息字符串)
-    """
-    if not isinstance(raw, str) or not raw.strip():
-        return None, "empty"
-
-    raw = raw.strip()
-    try:
-        obj = json.loads(raw)
-        if isinstance(obj, dict):
-            return obj, ""
-    except Exception:
-        pass
-
-    start = raw.find("{")
-    if start == -1:
-        return None, "no_brace"
-
-    depth = 0
-    for i in range(start, len(raw)):
-        ch = raw[i]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                candidate = raw[start : i + 1]
-                try:
-                    obj = json.loads(candidate)
-                    if isinstance(obj, dict):
-                        return obj, ""
-                except Exception:
-                    return None, "json_parse_failed"
-                break
-
-    return None, "unterminated_json"
-
-
-def atomic_write_json(path: str, data: dict) -> None:
-    """
-    原子写入 JSON，避免写一半
-    
-    功能：使用临时文件+替换的方式原子性地写入 JSON，确保不会出现文件损坏
-    参数：
-        path: 目标文件路径
-        data: 要写入的字典数据
-    """
-    tmp_dir = os.path.dirname(path) or "."
-    os.makedirs(tmp_dir, exist_ok=True)
-
-    fd, tmp_path = tempfile.mkstemp(prefix="story_game_", suffix=".tmp", dir=tmp_dir)
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp_path, path)
-    except Exception:
-        try:
-            os.remove(tmp_path)
-        except Exception:
-            pass
-        raise
-
-
-def with_file_lock(lock_path: str, fn: Callable[[], T]) -> T:
-    """
-    跨进程文件锁（Linux flock）
-    
     功能：使用 Linux 文件锁机制实现跨进程同步，确保多进程环境下的数据一致性
     参数：
         lock_path: 锁文件路径（必须是稳定存在的文件，不要锁 snapshot 本身）
-        fn: 要在锁保护下执行的函数
+        fn: 要在锁保护下执行的异步函数
     返回：函数的返回值
     注意：会阻塞直到拿到锁，snapshot 文件会被 os.replace 替换，所以不能直接锁 snapshot
     """
     os.makedirs(os.path.dirname(lock_path) or ".", exist_ok=True)
-    with open(lock_path, "w") as lockf:
-        fcntl.flock(lockf, fcntl.LOCK_EX)
-        try:
-            return fn()
-        finally:
-            fcntl.flock(lockf, fcntl.LOCK_UN)
+
+    # 由于文件锁本身是阻塞的，我们需要在线程池中执行
+    async def _lock_and_execute():
+        with open(lock_path, "w") as lockf:
+            fcntl.flock(lockf, fcntl.LOCK_EX)
+            try:
+                return await fn()
+            finally:
+                fcntl.flock(lockf, fcntl.LOCK_UN)
+
+    return await _lock_and_execute()
 
 
 # =========================
@@ -488,184 +313,18 @@ class Game:
 
 
 # =========================
-# prompts（已迁移到 game_generators.py）
-# =========================
-
-TURN_ENGINE_SYSTEM_PROMPT = """
-你是"剧情游戏回合引擎"。只输出严格 JSON（不要解释/markdown/注释）。
-
-【核心原则】
-1. 叙事层（Narrative）高度自由：可以即兴发挥，描述环境细节、情绪、临时事件、非关键NPC
-2. 状态层（State）低自由度：结构必须固定，只允许数值变化
-
-【输入 JSON 包含】
-- assets：世界资产（服务端会裁剪并剔除部分 secrets）
-- current_state：上回合的 story_state（结构固定，顶层字段：player/npc/world）
-- recent_log：最近对话
-- player_message：玩家本回合输入（动作/对白/尝试）
-- current_chapter：当前章节信息（包含 title, goal, description）
-- game_type：游戏类型（如 "companion_route" 表示角色攻略类游戏）
-
-【输出格式（必须包含所有字段）】
-
-每次输出必须包含以下所有字段，即使某些字段为空：
-
-{
-  "transition": "章节转换标识，如：chapter_1、chapter_2。如果当前回合不是章节开始/结束，则为空字符串",
-  "narration": "场景描述文本，如：Dim hallway at midnight, faint echoes haunt your steps. 如果没有叙述则为空字符串",
-  "sound": "声音描述，如：微弱回声、脚步声、风声等。如果没有声音则为空字符串",
-  "dialogues": [
-    {
-      "name": "角色名称，如：Emma",
-      "expression": "表情描述，如：pale tense、smile、angry等。如果没有表情则为空字符串",
-      "text": "对话内容（只包含NPC的对话，不包含玩家说的话）"
-    }
-  ],
-  "hooks": {
-    "player_goal": "给玩家的行动建议，如：Ask Emma what she means by the pull。如果没有建议则为空字符串"
-  }
-}
-
-【重要规则】
-- 每次输出必须包含所有字段（transition、narration、sound、dialogues、hooks）
-- 如果当前回合是章节开始或结束，设置 transition 字段（如 "chapter_1"），否则为空字符串
-- dialogues 只包含NPC的对话，不要包含玩家说的话（玩家的话已经在 player_message 中提供，不需要重复放入 dialogues）
-- 如果有NPC对话，在 dialogues 数组中添加对话对象，否则为空数组 []
-- 如果有场景描述，填写 narration 字段，否则为空字符串
-- 如果有声音效果，填写 sound 字段，否则为空字符串
-- 如果有行动建议，在 hooks.player_goal 中填写，否则为空字符串
-- 所有字段如果没有值，使用空字符串、空数组或空对象
-
-【叙事层规则（高自由度）】
-- 可以自由描述环境细节、角色情绪、临时事件、非关键NPC对话
-- 可以即兴发挥，不追求确定性
-- 必须遵守 assets 中的世界规则和设定
-- 禁止泄露任何 "secrets" 内容
-- 如果玩家输入不可行：narrative 中解释原因，并给替代建议
-
-【状态层规则（低自由度 - 必须严格遵守）】
-- 每次输出必须包含 state_delta 和 flags 字段
-- state_delta 的顶层 key 必须是允许的顶层字段（player/npc/world）
-- 对于已存在的顶层字段：只能更新已存在的子字段，严禁新增、删除或重命名任何子字段名
-- 特殊规则：如果回合剧情中有新NPC出现，可以在 state_delta 中添加新的 "npc" 字段（包含完整的 npc 对象：name, affection, relationship）
-  - 只有当 current_state 中没有 npc 字段时，才允许添加新的 npc
-  - 新 npc 必须包含 name 字段，affection 初始值建议为 0，relationship 初始值建议为 "陌生" 或类似描述
-- state_delta 只写变化，不要重写整个 current_state
-- 只允许修改数值（如 hp, affection, level）或字符串（如 status, scene, time）
-- 如果玩家输入导致状态变化：在 state_delta 中描述变化
-- 如果玩家输入不导致状态变化：state_delta 可以为空对象 {}
-
-【状态字段说明】
-- player: {hp, max_hp, level, status, name}
-- npc: {name, affection, relationship} （可选）
-- world: {scene, time, location}
-- chapter: {current_chapter, chapter_progress, chapter_goal_completed} （可选，章节类游戏需要）
-
-【角色攻略类游戏特殊规则】
-如果游戏类型是角色攻略类（companion_route）：
-- npc.affection 表示好感度，范围 0-100
-- 当好感度达到 100 时，游戏应该结束并达成完美结局
-- 在好感度接近 100（如 95+）时，应该给出暗示，让玩家知道即将达成目标
-- 当好感度达到 100 时，在 flags 中设置 game_ended = true, reason = "affection_max"（好感度满值）
-
-【章节系统】
-- 当前章节信息会在输入中提供（current_chapter）
-- 如果玩家在本回合完成了当前章节的目标，在 flags 中设置 chapter_goal_completed = true
-- 章节目标完成的标准：玩家行动明显达成了章节目标（如：收集到关键物品、完成关键任务、达到关键地点等）
-- 不要轻易判定章节完成，需要玩家确实达成了目标
-- 如果当前回合是章节开始或结束，在 transition 字段中填写章节标识（如 "chapter_1"），否则为空字符串
-
-【完整输出示例】
-
-示例1 - 普通回合（有对话）：
-{
-  "transition": "",
-  "narration": "Dim hallway at midnight, faint echoes haunt your steps.",
-  "sound": "微弱回声",
-  "dialogues": [
-    {
-      "name": "Emma",
-      "expression": "pale tense",
-      "text": "I noticed you staring earlier... Do you feel the pull too? It wants us to remember."
-    }
-  ],
-  "hooks": {
-    "player_goal": "Ask Emma what she means by the pull"
-  },
-  "state_delta": {
-    "world": {"time": "midnight"}
-  },
-  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
-}
-
-示例2 - 普通回合（无对话，只有叙述）：
-{
-  "transition": "",
-  "narration": "Dim hallway at midnight, faint echoes haunt your steps.",
-  "sound": "微弱回声",
-  "dialogues": [],
-  "hooks": {
-    "player_goal": ""
-  },
-  "state_delta": {
-    "world": {"time": "midnight"}
-  },
-  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
-}
-
-示例3 - 章节转换回合：
-{
-  "transition": "chapter_2",
-  "narration": "新的章节开始了，你站在新的起点。",
-  "sound": "",
-  "dialogues": [],
-  "hooks": {
-    "player_goal": ""
-  },
-  "state_delta": {},
-  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
-}
-
-示例4 - 新NPC出现（如果当前状态中没有npc字段）：
-{
-  "transition": "",
-  "narration": "你走进房间，看到一个陌生的人站在窗边。",
-  "sound": "脚步声",
-  "dialogues": [
-    {
-      "name": "艾米",
-      "expression": "好奇",
-      "text": "你好，我是艾米。你也是来这里寻找线索的吗？"
-    }
-  ],
-  "hooks": {
-    "player_goal": "与艾米对话，了解她的目的"
-  },
-  "state_delta": {
-    "npc": {
-      "name": "艾米",
-      "affection": 0,
-      "relationship": "陌生"
-    }
-  },
-  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
-}
-""".strip()
-
-
-# =========================
 # manager（方案 A：锁内 read -> modify -> write）
 # =========================
 class GameManager:
     def __init__(self):
         """
         初始化游戏管理器
-        
+
         功能：初始化游戏管理器，设置 OpenAI 客户端、模型配置和持久化目录。
         每个 group_id 对应独立的快照文件，实现群级别的游戏隔离。
         """
-        http_client = httpx.Client(timeout=httpx.Timeout(60.0, connect=10.0))
-        self.client = OpenAI(
+        http_client = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0))
+        self.client = AsyncOpenAI(
             api_key=config.OPENAI_API_KEY,
             base_url=config.OPENAI_BASE_URL,
             http_client=http_client,
@@ -702,10 +361,10 @@ class GameManager:
         _tls.game = value
 
     # ---------- txn (方案 A 核心，按 group_id 隔离) ----------
-    def _with_txn_for_group(self, group_id: str, fn: Callable[[], T]) -> T:
+    async def _with_txn_for_group(self, group_id: str, fn: Callable[[], T]) -> T:
         """
         单次请求事务（按 group_id 隔离，保证数据一致性）
-        
+
         流程：
             1. 获取该群专属文件锁
             2. 从该群快照文件加载状态到线程局部变量
@@ -715,13 +374,13 @@ class GameManager:
         snap_path = self._snapshot_path(group_id)
         lock_path = self._lock_path(group_id)
 
-        def _txn():
-            self._load_snapshot_if_any(snap_path)
-            result = fn()
-            self._persist(snap_path)
+        async def _txn():
+            await self._load_snapshot_if_any(snap_path)
+            result = await fn()
+            await self._persist(snap_path)
             return result
 
-        return with_file_lock(lock_path, _txn)
+        return await async_with_file_lock(lock_path, _txn)
 
     # ---------- 统一日志（流程清晰，状态不重复） ----------
     def _log_flow(self, stage: str, detail: str = "") -> None:
@@ -771,7 +430,7 @@ class GameManager:
     def _log_story_delta(self, round_num: int, delta: dict, applied: bool) -> None:
         """
         记录剧情状态变更日志
-        
+
         功能：记录每回合剧情状态的变化项，只输出变更部分
         参数：
             round_num: 回合编号
@@ -810,20 +469,21 @@ class GameManager:
         return None
 
     # ---------- persistence ----------
-    def _persist(self, path: str) -> None:
+    async def _persist(self, path: str) -> None:
         """将当前线程的 game 状态持久化到指定路径"""
         if not self.game:
             return
-        atomic_write_json(path, self.game.to_snapshot())
+        # 使用 asyncio.to_thread 在线程池中执行阻塞的文件写入操作
+        await asyncio.to_thread(atomic_write_json, path, self.game.to_snapshot())
 
-    def _load_snapshot_if_any(self, path: str) -> None:
+    async def _load_snapshot_if_any(self, path: str) -> None:
         """从指定路径加载快照到线程局部变量；文件不存在则置 None"""
         if not os.path.exists(path):
             self.game = None
             return
         try:
-            with open(path, "r", encoding="utf-8") as f:
-                snap = json.load(f)
+            # 使用 asyncio.to_thread 在线程池中执行阻塞的文件读取操作
+            snap = await asyncio.to_thread(self._load_json_file, path)
             self.game = Game.from_snapshot(snap)
         except Exception as e:
             try:
@@ -833,11 +493,16 @@ class GameManager:
                 logger.warning(f"load snapshot failed: {e}")
             self.game = None
 
+    def _load_json_file(self, path: str) -> dict:
+        """同步加载JSON文件的辅助方法"""
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
     # ---------- openai ----------
-    def _call_openai(self, model: str, messages: list, temperature: float) -> str:
+    async def _call_openai(self, model: str, messages: list, temperature: float) -> str:
         """
         调用 OpenAI API
-        
+
         功能：向 OpenAI API 发送请求并获取响应
         参数：
             model: 模型名称
@@ -845,14 +510,14 @@ class GameManager:
             temperature: 温度参数（控制随机性）
         返回：模型返回的文本内容
         """
-        resp = self.client.chat.completions.create(
+        resp = await self.client.chat.completions.create(
             model=model,
             messages=messages,
             temperature=temperature,
         )
         return resp.choices[0].message.content or ""
 
-    def _generate_outline(self, user_input: str, game_type: str = "", language_code: str = "cn") -> str:
+    async def _generate_outline(self, user_input: str, game_type: str = "", language_code: str = "cn") -> str:
         """
         根据用户输入的几句话生成剧情大纲
         
@@ -864,7 +529,7 @@ class GameManager:
         返回：生成的剧情大纲文本
         """
         logger.info(f"📝 开始生成大纲，用户输入: {user_input[:100]}, game_type: {game_type}, language: {language_code}")
-        raw = self._call_openai(
+        raw = await self._call_openai(
             model=self.world_model,
             messages=[
                 {"role": "system", "content": OUTLINE_GENERATOR_SYSTEM_PROMPT},
@@ -878,7 +543,7 @@ class GameManager:
         logger.info(f"📝 大纲生成完成，长度: {len(outline)}")
         return outline
 
-    def _generate_script(self, outline: str, game_type: str = "", language_code: str = "cn") -> dict:
+    async def _generate_script(self, outline: str, game_type: str = "", language_code: str = "cn") -> dict:
         """
         根据大纲生成游戏剧本
         
@@ -890,7 +555,7 @@ class GameManager:
         返回：生成的剧本字典
         """
         logger.info(f"📜 开始生成剧本，大纲长度: {len(outline)}, game_type: {game_type}, language: {language_code}")
-        raw = self._call_openai(
+        raw = await self._call_openai(
             model=self.world_model,
             messages=[
                 {"role": "system", "content": SCRIPT_GENERATOR_SYSTEM_PROMPT},
@@ -898,7 +563,7 @@ class GameManager:
             ],
             temperature=0.2,
         )
-        script, err = extract_json(raw)
+        script, err = extract_first_json_object(raw)
         if script is None:
             logger.warning(f"script generator parse failed: {err}")
             # 返回默认剧本结构
@@ -950,10 +615,10 @@ class GameManager:
             "first_scene_prompt": "你在一间黑暗房间醒来，门缝漏出冷光。你要做什么？",
         }
 
-    def _build_world(self, script: dict, game_type: str = "", language_code: str = "cn") -> dict:
+    async def _build_world(self, script: dict, game_type: str = "", language_code: str = "cn") -> dict:
         """
         构建游戏世界
-        
+
         功能：根据游戏剧本使用大模型生成游戏世界资产和初始状态
         参数：
             script: 游戏剧本字典（包含大纲、背景故事、章节、角色）
@@ -962,7 +627,7 @@ class GameManager:
         返回：包含 assets、initial_state、chapters 等字段的字典
         """
         logger.info(f"🌍 开始构建世界，剧本包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节，language: {language_code}")
-        raw = self._call_openai(
+        raw = await self._call_openai(
             model=self.world_model,
             messages=[
                 {"role": "system", "content": WORLD_BUILDER_SYSTEM_PROMPT},
@@ -970,7 +635,7 @@ class GameManager:
             ],
             temperature=0.2,
         )
-        obj, err = extract_json(raw)
+        obj, err = extract_first_json_object(raw)
         if obj is None:
             logger.warning(f"world builder parse failed: {err}")
             return self._fallback_world()
@@ -1123,10 +788,10 @@ class GameManager:
         return out
 
     # ---------- public API ----------
-    def start_game(self, group_id: str, game_type: str = "", text: str = "", language_code: str = "cn") -> dict:
+    async def start_game(self, group_id: str, game_type: str = "", text: str = "", language_code: str = "cn") -> dict:
         """
         开始新游戏（按 group_id 隔离）
-        
+
         参数：
             group_id: 群 ID（决定使用哪个快照）
             game_type: 游戏类型（可选）
@@ -1134,7 +799,7 @@ class GameManager:
             language_code: 语言代码（cn=中文, en=英文，默认cn）
         返回：包含游戏状态的字典
         """
-        def _impl():
+        async def _impl():
             self.game = Game()
             gs = self.game.global_state
             gs.progress = Progress.AWAITING_INITIAL_INPUT
@@ -1159,7 +824,7 @@ class GameManager:
 
                 gs.game_type = game_type
                 # 直接生成大纲
-                generated_outline = self._generate_outline(text, game_type, gs.language_code)
+                generated_outline = await self._generate_outline(text, game_type, gs.language_code)
                 gs.outline = generated_outline
                 gs.progress = Progress.AWAITING_OUTLINE_REVIEW
 
@@ -1186,9 +851,9 @@ class GameManager:
             self._log_flow("开始游戏", "等待玩家输入初始想法")
             return self._build_status_response()
 
-        return self._with_txn_for_group(group_id, _impl)
+        return await self._with_txn_for_group(group_id, _impl)
 
-    def send_message(self, group_id: str, text: str, player_name: str = "玩家", language_code: str = "en") -> dict:
+    async def send_message(self, group_id: str, text: str, player_name: str = "玩家", language_code: str = "en") -> dict:
         """
         发送玩家消息并推进游戏（按 group_id 隔离）
         
@@ -1202,7 +867,7 @@ class GameManager:
         if not text:
             return {"error": "请输入内容"}
 
-        def _impl():
+        async def _impl():
             s = time.time()   # 记录开始时间
             # 捕获外部作用域的变量，避免闭包作用域问题
             nonlocal text, player_name, language_code
@@ -1219,7 +884,7 @@ class GameManager:
             gs.language_code = language_code
             # 1) 等待初始输入：生成大纲
             if gs.progress == Progress.AWAITING_INITIAL_INPUT:
-                generated_outline = self._generate_outline(text, gs.game_type, gs.language_code)
+                generated_outline = await self._generate_outline(text, gs.game_type, gs.language_code)
                 gs.outline = generated_outline
                 gs.progress = Progress.AWAITING_OUTLINE_REVIEW
                 
@@ -1285,11 +950,11 @@ class GameManager:
                     return self._build_status_response()
                 
                 # 确认后先生成剧本，再构建世界
-                script = self._generate_script(final_outline, gs.game_type, gs.language_code)
+                script = await self._generate_script(final_outline, gs.game_type, gs.language_code)
                 gs.script = script
-                
+
                 # 构建世界
-                built = self._build_world(script, gs.game_type, gs.language_code)
+                built = await self._build_world(script, gs.game_type, gs.language_code)
 
                 gs.assets = built.get("assets", {}) or {}
                 gs.story_state = built.get("initial_state", {}) or {}
@@ -1414,7 +1079,7 @@ class GameManager:
 
             system_content = TURN_ENGINE_SYSTEM_PROMPT + language_instruction + "\n\n" + director_prompt
             start = time.time()
-            raw = self._call_openai(
+            raw = await self._call_openai(
                 model=self.turn_model,
                 messages=[
                     {"role": "system", "content": system_content},
@@ -1682,9 +1347,9 @@ class GameManager:
             logger.info(f"---------- 总耗时: {time.time() - s:.2f}s -------------")
             return resp
 
-        return self._with_txn_for_group(group_id, _impl)
+        return await self._with_txn_for_group(group_id, _impl)
 
-    def end_game(self, group_id: str) -> dict:
+    async def end_game(self, group_id: str) -> dict:
         """
         手动结束游戏（按 group_id 隔离）
         
@@ -1692,7 +1357,7 @@ class GameManager:
             group_id: 群 ID
         返回：包含更新后游戏状态的字典
         """
-        def _impl():
+        async def _impl():
             if not self.game:
                 return {"error": "游戏未开始"}
             gs = self.game.global_state
@@ -1709,7 +1374,7 @@ class GameManager:
             self._log_flow("游戏结束", "手动结束")
             return self._build_status_response()
 
-        return self._with_txn_for_group(group_id, _impl)
+        return await self._with_txn_for_group(group_id, _impl)
 
     def _format_response_for_frontend(self) -> dict:
         """
@@ -1797,26 +1462,26 @@ class GameManager:
             result.update(frontend_format)
         return result
 
-    def get_status(self, group_id: str) -> dict:
+    async def get_status(self, group_id: str) -> dict:
         """
         获取指定群的游戏状态（公开接口，从磁盘加载最新快照）
-        
+
         参数：
             group_id: 群 ID
         返回：包含游戏状态的字典
         """
-        self._load_snapshot_if_any(self._snapshot_path(group_id))
+        await self._load_snapshot_if_any(self._snapshot_path(group_id))
         return self._build_status_response()
 
-    def get_narrative_state(self, group_id: str) -> dict:
+    async def get_narrative_state(self, group_id: str) -> dict:
         """
         获取指定群的叙事状态（调试接口）
-        
+
         参数：
             group_id: 群 ID
         返回：包含 narrative_state 和 round 的字典
         """
-        self._load_snapshot_if_any(self._snapshot_path(group_id))
+        await self._load_snapshot_if_any(self._snapshot_path(group_id))
         if not self.game or self.game.narrative_state is None:
             return {"narrative_state": None, "round": 0}
         return {
@@ -1824,7 +1489,7 @@ class GameManager:
             "round": self.game.global_state.round_count,
         }
 
-    def get_narrative_log(self, group_id: str) -> dict:
+    async def get_narrative_log(self, group_id: str) -> dict:
         """
         获取指定群的叙事日志（调试接口）
         
@@ -1832,7 +1497,7 @@ class GameManager:
             group_id: 群 ID
         返回：包含 state_change_log 和 event_log 的字典
         """
-        self._load_snapshot_if_any(self._snapshot_path(group_id))
+        await self._load_snapshot_if_any(self._snapshot_path(group_id))
         if not self.game:
             return {"state_change_log": [], "event_log": []}
         return {
@@ -1841,7 +1506,7 @@ class GameManager:
         }
 
 
-    def create_official_game(self, group_id: str, game_id: str, language_code: str = "cn"):
+    async def create_official_game(self, group_id: str, game_id: str, language_code: str = "cn"):
         """
         创建官方游戏（按 group_id 隔离）
         
@@ -1851,7 +1516,7 @@ class GameManager:
             language_code: 语言代码
         返回：包含游戏初始化信息的字典
         """
-        def _impl():
+        async def _impl():
             # 1. 初始化游戏状态
             self.game = Game()
             gs = self.game.global_state
@@ -1864,10 +1529,10 @@ class GameManager:
             # 获取官方游戏设定
             prompts, game_type = get_official_game_prompt(game_id, "cn")  # 默认用中文设定
             gs.game_type = game_type
-            
+
             # 2. 生成游戏大纲
             self._log_flow("官方游戏", f"开始生成大纲，game_id={game_id}, language={language_code}")
-            generated_outline = self._generate_outline(prompts, game_type, language_code)
+            generated_outline = await self._generate_outline(prompts, game_type, language_code)
             gs.outline = generated_outline
             gs.progress = Progress.AWAITING_OUTLINE_REVIEW
             
@@ -1888,12 +1553,12 @@ class GameManager:
             self._log_flow("大纲生成完成", "等待确认")
         
         # 先完成大纲生成的事务（_with_txn 会自动持久化状态）
-        self._with_txn_for_group(group_id, _impl)
-        
+        await self._with_txn_for_group(group_id, _impl)
+
         # 5. 调用 send_message("确认") 来触发剧本生成和世界构建
         # 注意：send_message 内部会处理事务，所以这里不需要再包装事务
         self._log_flow("官方游戏", "模拟用户确认，开始生成剧本和构建世界")
-        result = self.send_message(group_id, "确认", player_name="系统")
+        result = await self.send_message(group_id, "确认", player_name="系统")
         return result
         
         # 原来的实现（已注释）
