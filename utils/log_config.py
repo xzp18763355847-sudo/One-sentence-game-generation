@@ -1,9 +1,13 @@
 """
-统一日志配置：控制台 + 根目录 logs 目录下的文件。
+统一日志配置（loguru）：控制台 + 项目根 logs 目录文件，适用于高并发异步场景。
+loguru 内部使用队列与独立 sink，不阻塞事件循环。
 """
-import logging
+
 import sys
 from pathlib import Path
+from typing import Any
+
+from loguru import logger
 
 # 项目根目录（本文件所在目录）
 PROJECT_ROOT = Path(__file__).resolve().parent
@@ -12,39 +16,51 @@ LOG_FILE = LOGS_DIR / "statem.log"
 
 _LOG_INITIALIZED = False
 
+# 统一格式：时间 | 级别 | 模块名 | 消息
+_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+    "<level>{level: <8}</level> | "
+    "<cyan>{extra[module]}</cyan> | "
+    "<level>{message}</level>"
+)
+
 
 def setup_logging(
-    level: int = logging.INFO,
+    level: str = "INFO",
     log_file: Path | None = LOG_FILE,
 ) -> None:
-    """配置根 logger：格式、级别，并添加控制台与文件 Handler。"""
+    """配置 loguru：移除默认 handler，添加控制台与文件 sink。"""
     global _LOG_INITIALIZED
     if _LOG_INITIALIZED:
         return
     _LOG_INITIALIZED = True
 
-    formatter = logging.Formatter(
-        fmt="%(asctime)s - %(levelname)s - %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-    root = logging.getLogger()
-    root.setLevel(level)
+    logger.remove()  # 去掉默认 stderr sink
 
-    # 避免重复添加（例如多模块 import 时）
-    if not root.handlers:
-        sh = logging.StreamHandler(sys.stdout)
-        sh.setFormatter(formatter)
-        root.addHandler(sh)
+    logger.add(
+        sys.stdout,
+        format=_FORMAT,
+        level=level,
+        colorize=True,
+    )
 
     if log_file is not None:
         log_path = Path(log_file)
         log_path.parent.mkdir(parents=True, exist_ok=True)
-        fh = logging.FileHandler(log_path, encoding="utf-8")
-        fh.setFormatter(formatter)
-        root.addHandler(fh)
+        logger.add(
+            log_path,
+            format=_FORMAT,
+            level=level,
+            encoding="utf-8",
+            rotation="10 MB",
+            retention="15 days",
+        )
+
+    # 默认 extra，避免直接使用 logger 时缺少 module
+    logger.configure(extra={"module": "root"})
 
 
-def get_logger(name: str) -> logging.Logger:
-    """获取已应用统一配置的 logger。首次调用时会执行 setup_logging。"""
+def get_logger(name: str) -> Any:
+    """获取带模块名的 logger，兼容现有 get_logger(__name__) 用法；首次调用时执行 setup_logging。"""
     setup_logging()
-    return logging.getLogger(name)
+    return logger.bind(module=name)
