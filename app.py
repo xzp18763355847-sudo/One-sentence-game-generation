@@ -238,6 +238,9 @@ async def send_message_sse(request: SendMessageRequest):
     if "player_goal" not in hooks:
         hooks["player_goal"] = ""
 
+    # 判断是否为“私聊角色类”（角色陪伴类），如果是则不向前端返回 narration
+    game_type = result.get("game_type") or result.get("global_state", {}).get("game_type")
+        
     aigc_generate = result.get("aigc_generate") if "aigc_generate" in result else None
     message_id = str(uuid.uuid4())
 
@@ -255,7 +258,8 @@ async def send_message_sse(request: SendMessageRequest):
         # 1) transition
         yield _sse_chunk(_wrap_reply({"transition": transition}))
         # 2) narration + sound
-        yield _sse_chunk(_wrap_reply({"narration": narration, "sound": sound}))
+        if game_type not in ["私聊角色类", ]:
+            yield _sse_chunk(_wrap_reply({"narration": narration, "sound": sound}))
         # 3) dialogues + hooks（若 result 含 aigc_generate 则一并返回）
         dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
         if aigc_generate is not None:
