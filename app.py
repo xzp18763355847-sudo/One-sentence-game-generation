@@ -1,5 +1,5 @@
 # """
-# AI 剧情游戏 - Flask API 服务（兼容旧海龟汤接口）
+# AI 剧情游戏 - FastAPI 服务（异步版本）
 
 # 新端点：
 # - GET  /api/status  - 获取当前游戏状态
@@ -11,117 +11,138 @@
 
 import json
 import uuid
-from flask import Flask, request, jsonify, send_from_directory, Response, stream_with_context
-from flask_cors import CORS
+import asyncio
+from typing import Dict, Any, Optional
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse, FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
-from log_config import get_logger
+from utils.log_config import get_logger
 from game_manager import GameManager, Game
-from game_types import is_valid_game_type, GameCategory, get_game_type_info
-from narrative.prompt_builder import OFFCIAL_GAME_PROMPT, _map_game_type_to_enum
+from game_types import is_valid_game_type
+from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
 from game_statics.preset_games import PRESET_GAME_SNAPSHOTS
 
 logger = get_logger(__name__)
 
-app = Flask(__name__, static_folder="frontend", static_url_path="")
-CORS(app, resources={r"/api/*": {"origins": "*"}})
+app = FastAPI(title="STATEM AI Game", version="2.0.0")
 
+# CORS 中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 在生产环境中应该指定具体的域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# 静态文件服务
 game_manager = GameManager()
 
 DEFAULT_GROUP_ID = "group001"
 
 
-def _get_group_id(data: dict) -> str:
+# Pydantic 模型定义
+class StartGameRequest(BaseModel):
+    group_id: str = DEFAULT_GROUP_ID
+    game_type: str = ""
+    text: str = ""
+    language_code: str = "cn"
+
+
+class StartOfficialGameRequest(BaseModel):
+    group_id: str = DEFAULT_GROUP_ID
+    game_id: str  # 这里实际是 game_id
+    # language_code: str = "en"
+
+
+class SendMessageRequest(BaseModel):
+    group_id: str = DEFAULT_GROUP_ID
+    text: str
+    player_name: str = "玩家"
+    language_code: str = "en"
+
+
+class EndGameRequest(BaseModel):
+    group_id: Optional[str] = DEFAULT_GROUP_ID
+
+
+def _get_group_id(data: Dict[str, Any]) -> str:
     """从请求数据中提取 group_id，不存在则返回默认值"""
     return (data.get("group_id") or "").strip() or DEFAULT_GROUP_ID
 
 
-@app.route("/")
-def serve_index():
-    """
-    提供前端首页
-    
-    功能：返回前端静态文件 index.html
-    返回：index.html 文件内容
-    """
-    return send_from_directory(app.static_folder, "index.html")
-
-
-@app.route("/api/status", methods=["GET"])
-def get_status():
+@app.get("/api/status")
+async def get_status(group_id: str = DEFAULT_GROUP_ID):
     """
     获取游戏状态 API
-    
+
     功能：返回指定群的完整游戏状态信息
-    查询参数：group_id（可选，默认 "default"）
+    查询参数：group_id（可选，默认 "group001"）
     返回：包含游戏状态的 JSON 响应
     """
-    group_id = (request.args.get("group_id") or "").strip() or DEFAULT_GROUP_ID
+    group_id = group_id.strip() or DEFAULT_GROUP_ID
     logger.info(f"GET /api/status group_id={group_id}")
-    return jsonify(game_manager.get_status(group_id))
+    result = await game_manager.get_status(group_id)
+    return JSONResponse(result)
 
 
-@app.route("/api/start", methods=["POST"])
-def start_game():
+@app.post("/api/start")
+async def start_game(request: StartGameRequest):
     """
     开始新游戏 API
-    
+
     功能：初始化并开始一个新的游戏会话
-    请求体：{"group_id": "群ID", "game_type": "游戏类型", "text": "初始文本", "language_code": "语言代码（cn/en，默认cn）"}（可选）
+    请求体：StartGameRequest
     返回：包含完整游戏状态的 JSON 响应（包括 messages、state、script 等）
     """
-    data = request.get_json(silent=True) or {}
+    data = request.dict()
     print("开始游戏输入data================")
     print(data)
     print("开始游戏输入data================")
+
     group_id = _get_group_id(data)
-    game_type = data.get("game_type", "").strip()
-    text = data.get("text", "").strip()
-    language_code = data.get("language_code", "cn").strip()
+    game_type = request.game_type.strip()
+    text = request.text.strip()
+    language_code = request.language_code.strip()
 
     # 验证游戏类型
     if game_type and not is_valid_game_type(game_type):
-        return jsonify({"error": f"无效的游戏类型: {game_type}"}), 400
+        raise HTTPException(status_code=400, detail=f"无效的游戏类型: {game_type}")
 
     logger.info(
         f"POST /api/start 开始新游戏 group_id={group_id} game_type={game_type} text_len={len(text)} language_code={language_code}")
 
     # 返回完整的游戏状态（包含 messages、state、script 等）
     # 这样前端可以正常显示游戏内容
-    result = game_manager.start_game(group_id=group_id, game_type=game_type, text=text, language_code=language_code)
+    result = await game_manager.start_game(group_id=group_id, game_type=game_type, text=text,
+                                           language_code=language_code)
     print("开始游戏输出result（完整状态）================")
     print(result)
     print("开始游戏输出result（完整状态）================")
 
-    return jsonify(result)
-    
-    # 如果只需要返回剧本格式（符合 game_generators.py 72-100 行格式），可以使用下面的代码：
-    # script = result.get("script", {})
-    # return jsonify(script)
-    
-    # 原来的调用（已注释）
-    # print("开始游戏输出result================")
-    # print(game_manager.start_game(game_type=game_type, text=text))
-    # print("开始游戏输出result================")
-    # return jsonify(game_manager.start_game(game_type=game_type, text=text))
+    return JSONResponse(result)
 
 
-@app.route("/api/start_offcial_game", methods=["POST"])
-def start_offcial_game():
+@app.post("/api/start_offcial_game")
+async def start_offcial_game(request: StartOfficialGameRequest):
     """
     开始官方游戏 API
-    
+
     功能：初始化并开始一个新的官方游戏会话
-    请求体：{"group_id": "群ID", "game_id": "游戏ID", "language_code": "语言代码"}
+    请求体：StartOfficialGameRequest
     """
-    data = request.get_json(silent=True) or {}
+    data = request.dict()
     group_id = _get_group_id(data)
-    # game_id = data.get("game_id", "").strip()
-    game_id = data.get("text", "").strip()
+    game_id = data.get("game_id", "").strip()
+    # game_id = request.text.strip()  # 这里 text 字段实际是 game_id
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
-        return jsonify({"error": f"无效的游戏ID: {game_id}"}), 400
-    # language_code = data.get("language_code", "cn").strip()
-    language_code = "en"
-    logger.info(f"POST /api/start_offcial_game group_id={group_id} game_id={game_id}")
+        raise HTTPException(status_code=400, detail=f"无效的游戏ID: {game_id}")
+
+    language_code = "en"  # 固定为英文
+    logger.info(f"POST /api/start_official_game group_id={group_id} game_id={game_id}")
 
     # 检测是否为预设游戏ID，如果是则直接加载预设游戏，跳过模型生成
     if game_id in PRESET_GAME_SNAPSHOTS:
@@ -129,80 +150,81 @@ def start_offcial_game():
         preset_snapshot = PRESET_GAME_SNAPSHOTS[game_id]
 
         # 使用事务加载预设游戏并保存到对应的 group_id 快照文件
-        def _load_preset_game():
+        async def _load_preset_game():
             # 从预设游戏快照创建 Game 对象
             game_manager.game = Game.from_snapshot(preset_snapshot)
-            # 转换 game_type 从中文到枚举值
-            if game_manager.game and game_manager.game.global_state:
-                raw_type = game_manager.game.global_state.game_type
-                mapped_type = _map_game_type_to_enum(raw_type)
-                if mapped_type:
-                    game_manager.game.global_state.game_type = mapped_type
-                    logger.info(f"预设游戏 game_type 已转换: {raw_type} -> {mapped_type}")
             logger.info(f"预设游戏已加载到内存")
 
         # 使用事务保存预设游戏
-        game_manager._with_txn_for_group(group_id, _load_preset_game)
+        await game_manager._with_txn_for_group(group_id, _load_preset_game)
 
         # 返回游戏状态
-        result = game_manager.get_status(group_id)
-        return jsonify(result)
+        result = await game_manager.get_status(group_id)
+        return JSONResponse(result)
 
     # 普通 game_id: 使用原有逻辑生成游戏
-    result = game_manager.create_official_game(group_id=group_id, game_id=game_id, language_code=language_code)
-    return jsonify(result)
+    result = await game_manager.create_official_game(group_id=group_id, game_id=game_id, language_code=language_code)
+    return JSONResponse(result)
 
 
-@app.route("/api/message", methods=["POST"])
-def send_message():
+@app.post("/api/message")
+async def send_message(request: SendMessageRequest):
     """
     发送玩家消息 API
-    
+
     功能：处理玩家发送的消息，推进游戏剧情
-    请求体：{"group_id": "群ID", "text": "玩家消息", "player_name": "玩家名称"}
+    请求体：SendMessageRequest
     返回：包含更新后游戏状态的 JSON 响应
     """
-    data = request.get_json(silent=True) or {}
+    data = request.dict()
     print("输入data================")
     print(data)
     print("输入data================")
+
     group_id = _get_group_id(data)
-    text = (data.get("text") or "").strip()
-    language_code = (data.get("language_code") or "en").strip()
-    player_name = (data.get("player_name") or "玩家").strip()
+    text = request.text.strip()
+    language_code = request.language_code.strip()
+    player_name = request.player_name.strip()
+
     logger.info("POST /api/message group_id=%s player=%s len=%d text_preview=%s",
                 group_id, player_name, len(text),
                 (text[:30] + "..." if len(text) > 30 else text))
-    result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name, language_code = language_code)
-    code = 200 if "error" not in result else 400
+
+    result = await game_manager.send_message(group_id=group_id, text=text, player_name=player_name,
+                                             language_code=language_code)
+
     if "error" in result:
         logger.warning("POST /api/message group_id=%s error=%s", group_id, result.get("error"))
+        raise HTTPException(status_code=400, detail=result.get("error"))
+
     print("输出result================")
     print(result)
     print("输出result================")
-    return jsonify(result), code
+    return JSONResponse(result)
 
 
-@app.route("/api/message_sse", methods=["POST"])
-def send_message_sse():
+@app.post("/api/message_sse")
+async def send_message_sse(request: SendMessageRequest):
     """
     发送玩家消息 API（SSE 分段返回）
 
-    请求体：与 /api/message 相同 {"group_id", "text", "player_name", "language_code"}
+    请求体：与 /api/message 相同 SendMessageRequest
     返回：text/event-stream，按顺序推送（每条为 event: reply + data: JSON）：
       - event: reply / data: {"type":"reply","payload":{"can_feedback":false,"content":{...}},"message_id":"..."}
       - 第 1 条 content：transition；第 2 条 narration、sound；第 3 条 dialogues、hooks（可选 aigc_generate）；第 4 条完整状态
     错误时返回 400 + JSON {"error": "..."}，不走 SSE。
     """
-    data = request.get_json(silent=True) or {}
+    data = request.dict()
     group_id = _get_group_id(data)
-    text = (data.get("text") or "").strip()
-    player_name = data.get("player_name", "").strip() or "玩家"
-    language_code = (data.get("language_code") or "en").strip()
-    result = game_manager.send_message(group_id=group_id, text=text, player_name=player_name, language_code = language_code)
+    text = request.text.strip()
+    player_name = request.player_name.strip() or "玩家"
+    language_code = request.language_code.strip()
+
+    result = await game_manager.send_message(group_id=group_id, text=text, player_name=player_name,
+                                             language_code=language_code)
     if "error" in result:
         logger.warning("POST /api/message_sse group_id=%s error=%s", group_id, result.get("error"))
-        return jsonify(result), 400
+        raise HTTPException(status_code=400, detail=result.get("error"))
 
     transition = result.get("transition", "") or ""
     narration = result.get("narration", "") or ""
@@ -216,26 +238,20 @@ def send_message_sse():
     if "player_goal" not in hooks:
         hooks["player_goal"] = ""
 
-    # 判断是否为“私聊角色类”（角色陪伴类），如果是则不向前端返回 narration
-    game_type = result.get("game_type") or result.get("global_state", {}).get("game_type") or ""
-    game_info = get_game_type_info(game_type) if game_type else {}
-    if game_info and game_info.get("category") == GameCategory.CHARACTER_COMPANION:
-        narration = ""
-
     aigc_generate = result.get("aigc_generate") if "aigc_generate" in result else None
     message_id = str(uuid.uuid4())
 
     def _wrap_reply(content: dict) -> dict:
         return {
             "type": "reply",
-            "payload": {"can_feedback": False, "can_rating":True, "content": content},
+            "payload": {"can_feedback": False, "can_rating": True, "content": content},
             "message_id": message_id,
         }
 
     def _sse_chunk(obj: dict) -> str:
         return f"event: reply\ndata: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
-    def generate():
+    async def generate():
         # 1) transition
         yield _sse_chunk(_wrap_reply({"transition": transition}))
         # 2) narration + sound
@@ -248,9 +264,9 @@ def send_message_sse():
         # 4) 完整状态，便于前端更新 UI
         # yield _sse_chunk(_wrap_reply(result))
 
-    return Response(
-        stream_with_context(generate()),
-        mimetype="text/event-stream",
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "X-Accel-Buffering": "no",
@@ -259,49 +275,64 @@ def send_message_sse():
     )
 
 
-@app.route("/api/narrative/state", methods=["GET"])
-def get_narrative_state():
+@app.get("/api/narrative/state")
+async def get_narrative_state(group_id: str = DEFAULT_GROUP_ID):
     """
     获取叙事状态 API（调试接口）
-    
+
     功能：返回指定群当前四条主线叙事状态，用于调试和监控
     查询参数：group_id（可选）
     返回：包含叙事状态的 JSON 响应
     """
-    group_id = (request.args.get("group_id") or "").strip() or DEFAULT_GROUP_ID
+    group_id = group_id.strip() or DEFAULT_GROUP_ID
     logger.info(f"GET /api/narrative/state group_id={group_id}")
-    return jsonify(game_manager.get_narrative_state(group_id))
+    result = await game_manager.get_narrative_state(group_id)
+    return JSONResponse(result)
 
 
-@app.route("/api/narrative/log", methods=["GET"])
-def get_narrative_log():
+@app.get("/api/narrative/log")
+async def get_narrative_log(group_id: str = DEFAULT_GROUP_ID):
     """
     获取叙事日志 API（调试接口）
-    
+
     功能：返回指定群状态变更日志和事件日志，用于调试和监控
     查询参数：group_id（可选）
     返回：包含日志信息的 JSON 响应
     """
-    group_id = (request.args.get("group_id") or "").strip() or DEFAULT_GROUP_ID
+    group_id = group_id.strip() or DEFAULT_GROUP_ID
     logger.info(f"GET /api/narrative/log group_id={group_id}")
-    return jsonify(game_manager.get_narrative_log(group_id))
+    result = await game_manager.get_narrative_log(group_id)
+    return JSONResponse(result)
 
 
-@app.route("/api/end", methods=["POST"])
-def end_game():
+@app.post("/api/end")
+# async def end_game(request: EndGameRequest):
+async def end_game(group_id: str = DEFAULT_GROUP_ID):
     """
     结束游戏 API
-    
+
     功能：手动结束指定群的游戏会话
-    请求体：{"group_id": "群ID"}
+    请求体：EndGameRequest
     返回：包含结束状态信息的 JSON 响应
     """
-    data = request.get_json(silent=True) or {}
-    group_id = _get_group_id(data)
+    # group_id = _get_group_id(request.dict())
     logger.info(f"POST /api/end 手动结束游戏 group_id={group_id}")
-    return jsonify(game_manager.end_game(group_id))
+    result = await game_manager.end_game(group_id)
+    return JSONResponse(result)
 
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    """全局异常处理器"""
+    logger.error(f"全局异常: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"}
+    )
+app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
 
 if __name__ == "__main__":
+    import uvicorn
+
     logger.info("server: http://0.0.0.0:4000")
-    app.run(debug=False, use_reloader=False, host="0.0.0.0", port=4008)
+    uvicorn.run(app, host="0.0.0.0", port=4000, log_level="info")
