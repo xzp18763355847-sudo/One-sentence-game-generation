@@ -8,7 +8,6 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 
-from src.api.config import DEFAULT_GROUP_ID
 from src.api.endpoints.game_manage.schemas import (
     EndGameRequest,
     MessageRequest,
@@ -17,6 +16,7 @@ from src.api.endpoints.game_manage.schemas import (
 )
 
 # 项目根模块（需从项目根目录运行 uvicorn）
+from config import DEFAULT_GROUP_ID
 from game_types import is_valid_game_type
 from log_config import get_logger
 from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
@@ -151,7 +151,7 @@ async def send_message_sse(
     if "player_goal" not in hooks:
         hooks["player_goal"] = ""
     aigc_generate = result.get("aigc_generate") if "aigc_generate" in result else None
-    message_id = str(uuid.uuid4())
+    message_id = str(uuid.uuid4())  # 是否需要返回
 
     def _wrap_reply(content: dict) -> dict:
         return {
@@ -168,7 +168,7 @@ async def send_message_sse(
         yield _sse_line(_wrap_reply({"narration": narration, "sound": sound}))
         dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
         if aigc_generate is not None:
-            dialogues_payload["aigc_generate"] = aigc_generate
+            dialogues_payload["aigc_generate"] = aigc_generate  # 多模态事件
         yield _sse_line(_wrap_reply(dialogues_payload))
 
     return StreamingResponse(

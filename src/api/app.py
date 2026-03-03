@@ -7,9 +7,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from config import HOST, PORT
 from game_manager import GameManager
 
-from src.api.config import HOST, PORT
 from src.api.endpoints.game_manage.router import router as game_router
 
 app = FastAPI(title="AI 剧情游戏 API")
