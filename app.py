@@ -136,8 +136,8 @@ async def start_offcial_game(request: StartOfficialGameRequest):
     """
     data = request.dict()
     group_id = _get_group_id(data)
-    # game_id = data.get("game_id", "").strip()
-    game_id = request.text.strip()  # 这里 text 字段实际是 game_id
+    game_id = data.get("game_id", "").strip()
+    # game_id = request.text.strip()  # 这里 text 字段实际是 game_id
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
         raise HTTPException(status_code=400, detail=f"无效的游戏ID: {game_id}")
 
