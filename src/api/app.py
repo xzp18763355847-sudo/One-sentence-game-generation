@@ -24,7 +24,8 @@ app.add_middleware(
 # 注入 GameManager，供 router 依赖使用
 app.state.game_manager = GameManager()
 
-app.include_router(game_router)
+# 先注册 API 路由，保证 /api/* 优先匹配（prefix 在 include 时统一指定）
+app.include_router(game_router, prefix="/api")
 
 # 静态首页（路径相对于项目根，需从项目根运行）
 _frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend"

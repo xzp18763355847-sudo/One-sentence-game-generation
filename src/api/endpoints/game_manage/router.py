@@ -23,7 +23,7 @@ from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/api", tags=["game"])
+router = APIRouter(tags=["game"])
 
 
 def get_game_manager(request: Request) -> Any:
