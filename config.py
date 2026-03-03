@@ -33,7 +33,6 @@ HOST = os.getenv("API_HOST", "0.0.0.0")
 PORT = int(os.getenv("API_PORT", "4000"))
 
 # Redis 相关（预留，后续接入时使用）
-REDIS_URL = os.getenv("REDIS_URL", "")  # 例如 redis://localhost:6379/0
 REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_DB = int(os.getenv("REDIS_DB", "0"))
