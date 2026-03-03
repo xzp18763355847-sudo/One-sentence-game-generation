@@ -19,13 +19,13 @@ STORY_WORLD_MODEL = os.getenv("STORY_WORLD_MODEL")
 OPENAI_MODEL = os.getenv("OPENAI_MODEL")
 
 # Redis IP
-REDIS_HOST = os.getenv("REDIS_HOST")
+REDIS_HOST = os.getenv("REDIS_HOST"， "0.0.0.0")
 # Redis 端口
-REDIS_PORT = int(os.getenv("REDIS_PORT"))
+REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 # Redis数据库
-REDIS_DB = int(os.getenv("REDIS_DB"))
+REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 # Redis密码
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD")
+REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
 # Game settings
 MAX_ROUNDS = 200
 HINT_ROUND_THRESHOLD = 10  # Start giving hints after this many rounds
