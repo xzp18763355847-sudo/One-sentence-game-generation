@@ -7,22 +7,20 @@ AI 剧情游戏 - 单人版 GameManager（不写死 state 字段）
 - story_state 顶层字段完全由 initial_state 决定（不写死）
 - state_patch 采用 deep merge 继承更新
 - 对外返回会 strip 掉任何层级的 secrets 字段（避免泄露）
-- 持久化：写 snapshot JSON，刷新/重启不丢（前端能看到 status 才行）
+- 持久化：存储到 Redis，刷新/重启不丢（前端能看到 status 才行）
 
 修复点（针对 gunicorn 多 worker 丢档/坏档/进度不一致）：
-✅ 方案 A：事务化（锁内 read -> modify -> write）
+✅ 方案 A：事务化（Redis分布式锁内 read -> modify -> write）
 - 每次 start_game / send_message / end_game 都会：
-  1) 拿锁
-  2) reload snapshot（覆盖内存）
+  1) 获取Redis分布式锁
+  2) 从Redis加载快照（覆盖内存）
   3) 执行业务逻辑推进状态
-  4) persist snapshot
-- 这样不会出现“worker B 用旧内存覆盖 worker A 的新存档”的回滚问题
+  4) 持久化到Redis
+- 这样不会出现"worker B 用旧内存覆盖 worker A 的新存档"的回滚问题
 """
 
 import json
-import os
 import re
-import tempfile
 import threading
 import time
 import asyncio
@@ -31,7 +29,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Any, Dict, List, Optional, Tuple, Callable, TypeVar, Coroutine
 
 from game_statics.intern_map import SYSTEM_MESSAGES
-from utils.util import strip_secrets, atomic_write_json, get_system_message, extract_first_json_object
+from utils.util import strip_secrets, get_system_message, extract_first_json_object
+from utils.redis_cache import dao as redis_dao
 
 # 每个工作线程独立保存当前正在处理的 Game 实例
 _tls = threading.local()
@@ -39,6 +38,7 @@ _tls = threading.local()
 import httpx
 from openai import AsyncOpenAI
 import config
+import redis.asyncio as redis
 from state_schema import StateSchema, safe_merge_state
 from narrative.state_models import NarrativeState
 from narrative.engine import (
@@ -61,8 +61,8 @@ from game_generators import (
     WORLD_BUILDER_SYSTEM_PROMPT, TURN_ENGINE_SYSTEM_PROMPT,
 )
 
-# Linux 文件锁（gunicorn 多 worker 必备）
-import fcntl
+# Linux 文件锁（gunicorn 多 worker 必备）已移除，改用 Redis 分布式锁
+# import fcntl
 
 from utils.log_config import get_logger
 
@@ -71,29 +71,55 @@ logger = get_logger(__name__)
 T = TypeVar("T")
 
 
-async def async_with_file_lock(lock_path: str, fn: Callable[[], T]) -> T:
+async def async_with_redis_lock(lock_key: str, fn: Callable[[], T], timeout: int = 30) -> T:
     """
-    跨进程文件锁（Linux flock）异步版本
+    Redis 分布式锁异步版本
 
-    功能：使用 Linux 文件锁机制实现跨进程同步，确保多进程环境下的数据一致性
+    功能：使用 Redis 分布式锁机制实现跨进程同步，确保多进程环境下的数据一致性
     参数：
-        lock_path: 锁文件路径（必须是稳定存在的文件，不要锁 snapshot 本身）
+        lock_key: Redis 锁的键名
         fn: 要在锁保护下执行的异步函数
+        timeout: 锁超时时间（秒）
     返回：函数的返回值
-    注意：会阻塞直到拿到锁，snapshot 文件会被 os.replace 替换，所以不能直接锁 snapshot
     """
-    os.makedirs(os.path.dirname(lock_path) or ".", exist_ok=True)
+    # 确保Redis连接已初始化
+    if redis_dao.redis is None:
+        await redis_dao.init_pools()
 
-    # 由于文件锁本身是阻塞的，我们需要在线程池中执行
-    async def _lock_and_execute():
-        with open(lock_path, "w") as lockf:
-            fcntl.flock(lockf, fcntl.LOCK_EX)
-            try:
-                return await fn()
-            finally:
-                fcntl.flock(lockf, fcntl.LOCK_UN)
+    # 生成唯一的锁值
+    import uuid
+    lock_value = str(uuid.uuid4())
 
-    return await _lock_and_execute()
+    # 尝试获取锁
+    acquired = await redis_dao.redis.set(
+        lock_key,
+        lock_value,
+        nx=True,  # 只在键不存在时设置
+        ex=timeout  # 设置过期时间
+    )
+
+    if not acquired:
+        # 等待锁释放，最多等待 timeout 秒
+        for _ in range(timeout * 10):  # 每100ms检查一次
+            await asyncio.sleep(0.1)
+            acquired = await redis_dao.redis.set(lock_key, lock_value, nx=True, ex=timeout)
+            if acquired:
+                break
+        else:
+            raise TimeoutError(f"无法获取Redis锁: {lock_key}")
+
+    try:
+        return await fn()
+    finally:
+        # 使用Lua脚本安全释放锁（只有持有锁的进程才能释放）
+        lua_script = """
+        if redis.call("get", KEYS[1]) == ARGV[1] then
+            return redis.call("del", KEYS[1])
+        else
+            return 0
+        end
+        """
+        await redis_dao.redis.eval(lua_script, 1, lock_key, lock_value)
 
 
 # =========================
@@ -320,8 +346,8 @@ class GameManager:
         """
         初始化游戏管理器
 
-        功能：初始化游戏管理器，设置 OpenAI 客户端、模型配置和持久化目录。
-        每个 group_id 对应独立的快照文件，实现群级别的游戏隔离。
+        功能：初始化游戏管理器，设置 OpenAI 客户端、模型配置。
+        每个 group_id 对应独立的 Redis 键，实现群级别的游戏隔离。
         """
         http_client = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0))
         self.client = AsyncOpenAI(
@@ -333,22 +359,21 @@ class GameManager:
         self.world_model = getattr(config, "STORY_WORLD_MODEL", config.OPENAI_MODEL)
         self.turn_model = getattr(config, "STORY_TURN_MODEL", config.OPENAI_MODEL)
 
-        # 所有群快照统一存放目录
-        self._snapshots_dir = getattr(config, "STORY_SNAPSHOTS_DIR", "snapshots")
-        os.makedirs(self._snapshots_dir, exist_ok=True)
-        logger.info(f"📁 snapshots_dir={os.path.abspath(self._snapshots_dir)}")
+        logger.info(f"🚀 GameManager initialized, using Redis for persistence")
 
-    # ---------- group_id 路径工具 ----------
+    # ---------- group_id Redis键工具 ----------
     @staticmethod
     def _sanitize_group_id(group_id: str) -> str:
-        """只保留字母/数字/下划线/连字符，防止路径穿越"""
+        """只保留字母/数字/下划线/连字符，防止键名冲突"""
         return re.sub(r"[^\w\-]", "_", group_id or "default")
 
-    def _snapshot_path(self, group_id: str) -> str:
-        return os.path.join(self._snapshots_dir, f"group_{self._sanitize_group_id(group_id)}.json")
+    def _redis_game_key(self, group_id: str) -> str:
+        """生成游戏状态的Redis键名"""
+        return f"game:snapshot:{self._sanitize_group_id(group_id)}"
 
-    def _lock_path(self, group_id: str) -> str:
-        return os.path.join(self._snapshots_dir, f"group_{self._sanitize_group_id(group_id)}.lock")
+    def _redis_lock_key(self, group_id: str) -> str:
+        """生成分布式锁的Redis键名"""
+        return f"game:lock:{self._sanitize_group_id(group_id)}"
 
     # ---------- thread-local game 属性 ----------
     @property
@@ -366,21 +391,21 @@ class GameManager:
         单次请求事务（按 group_id 隔离，保证数据一致性）
 
         流程：
-            1. 获取该群专属文件锁
-            2. 从该群快照文件加载状态到线程局部变量
+            1. 获取该群专属Redis分布式锁
+            2. 从Redis加载状态到线程局部变量
             3. 执行业务逻辑
-            4. 将线程局部变量持久化回该群快照文件
+            4. 将线程局部变量持久化回Redis
         """
-        snap_path = self._snapshot_path(group_id)
-        lock_path = self._lock_path(group_id)
+        redis_key = self._redis_game_key(group_id)
+        lock_key = self._redis_lock_key(group_id)
 
         async def _txn():
-            await self._load_snapshot_if_any(snap_path)
+            await self._load_snapshot_from_redis(redis_key)
             result = await fn()
-            await self._persist(snap_path)
+            await self._persist_to_redis(redis_key)
             return result
 
-        return await async_with_file_lock(lock_path, _txn)
+        return await async_with_redis_lock(lock_key, _txn)
 
     # ---------- 统一日志（流程清晰，状态不重复） ----------
     def _log_flow(self, stage: str, detail: str = "") -> None:
@@ -469,34 +494,39 @@ class GameManager:
         return None
 
     # ---------- persistence ----------
-    async def _persist(self, path: str) -> None:
-        """将当前线程的 game 状态持久化到指定路径"""
+    async def _persist_to_redis(self, redis_key: str) -> None:
+        """将当前线程的 game 状态持久化到 Redis"""
         if not self.game:
             return
-        # 使用 asyncio.to_thread 在线程池中执行阻塞的文件写入操作
-        await asyncio.to_thread(atomic_write_json, path, self.game.to_snapshot())
 
-    async def _load_snapshot_if_any(self, path: str) -> None:
-        """从指定路径加载快照到线程局部变量；文件不存在则置 None"""
-        if not os.path.exists(path):
-            self.game = None
-            return
+        # 确保Redis连接已初始化
+        if redis_dao.redis is None:
+            await redis_dao.init_pools()
+
+        # 将游戏状态转换为JSON并存储到Redis
+        snapshot = self.game.to_snapshot()
+        await redis_dao.redis.set(redis_key, json.dumps(snapshot, ensure_ascii=False))
+        logger.debug(f"📁 Game state persisted to Redis key: {redis_key}")
+
+    async def _load_snapshot_from_redis(self, redis_key: str) -> None:
+        """从Redis加载快照到线程局部变量；键不存在则置 None"""
+        # 确保Redis连接已初始化
+        if redis_dao.redis is None:
+            await redis_dao.init_pools()
+
         try:
-            # 使用 asyncio.to_thread 在线程池中执行阻塞的文件读取操作
-            snap = await asyncio.to_thread(self._load_json_file, path)
-            self.game = Game.from_snapshot(snap)
-        except Exception as e:
-            try:
-                size = os.path.getsize(path)
-                logger.warning(f"load snapshot failed: {e} (size={size}, path={os.path.abspath(path)})")
-            except Exception:
-                logger.warning(f"load snapshot failed: {e}")
-            self.game = None
+            snapshot_json = await redis_dao.redis.get(redis_key)
+            if snapshot_json is None:
+                self.game = None
+                logger.debug(f"📁 No game state found in Redis key: {redis_key}")
+                return
 
-    def _load_json_file(self, path: str) -> dict:
-        """同步加载JSON文件的辅助方法"""
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+            snapshot = json.loads(snapshot_json)
+            self.game = Game.from_snapshot(snapshot)
+            logger.debug(f"📁 Game state loaded from Redis key: {redis_key}")
+        except Exception as e:
+            logger.warning(f"load snapshot from redis failed: {e} (key={redis_key})")
+            self.game = None
 
     # ---------- openai ----------
     async def _call_openai(self, model: str, messages: list, temperature: float) -> str:
@@ -1464,13 +1494,14 @@ class GameManager:
 
     async def get_status(self, group_id: str) -> dict:
         """
-        获取指定群的游戏状态（公开接口，从磁盘加载最新快照）
+        获取指定群的游戏状态（公开接口，从Redis加载最新快照）
 
         参数：
             group_id: 群 ID
         返回：包含游戏状态的字典
         """
-        await self._load_snapshot_if_any(self._snapshot_path(group_id))
+        redis_key = self._redis_game_key(group_id)
+        await self._load_snapshot_from_redis(redis_key)
         return self._build_status_response()
 
     async def get_narrative_state(self, group_id: str) -> dict:
@@ -1481,7 +1512,8 @@ class GameManager:
             group_id: 群 ID
         返回：包含 narrative_state 和 round 的字典
         """
-        await self._load_snapshot_if_any(self._snapshot_path(group_id))
+        redis_key = self._redis_game_key(group_id)
+        await self._load_snapshot_from_redis(redis_key)
         if not self.game or self.game.narrative_state is None:
             return {"narrative_state": None, "round": 0}
         return {
@@ -1492,12 +1524,13 @@ class GameManager:
     async def get_narrative_log(self, group_id: str) -> dict:
         """
         获取指定群的叙事日志（调试接口）
-        
+
         参数：
             group_id: 群 ID
         返回：包含 state_change_log 和 event_log 的字典
         """
-        await self._load_snapshot_if_any(self._snapshot_path(group_id))
+        redis_key = self._redis_game_key(group_id)
+        await self._load_snapshot_from_redis(redis_key)
         if not self.game:
             return {"state_change_log": [], "event_log": []}
         return {

@@ -192,7 +192,8 @@ async def send_message(request: SendMessageRequest):
 
     result = await game_manager.send_message(group_id=group_id, text=text, player_name=player_name,
                                              language_code=language_code)
-
+    game_type = result.get("game_type") or result.get("global_state", {}).get("game_type")
+    logger.info(f"----游戏类型{game_type}------")
     if "error" in result:
         logger.warning("POST /api/message group_id=%s error=%s", group_id, result.get("error"))
         raise HTTPException(status_code=400, detail=result.get("error"))
@@ -225,7 +226,8 @@ async def send_message_sse(request: SendMessageRequest):
     if "error" in result:
         logger.warning("POST /api/message_sse group_id=%s error=%s", group_id, result.get("error"))
         raise HTTPException(status_code=400, detail=result.get("error"))
-
+    game_type = result.get("game_type") or result.get("global_state", {}).get("game_type")
+    logger.info(f"----游戏类型   {game_type}------")
     transition = result.get("transition", "") or ""
     narration = result.get("narration", "") or ""
     sound = result.get("sound", "") or ""
@@ -325,6 +327,18 @@ async def end_game(group_id: str = DEFAULT_GROUP_ID):
     return JSONResponse(result)
 
 
+@app.on_event("startup")
+async def startup_event():
+    """应用启动时初始化Redis连接"""
+    from utils.redis_cache import dao as redis_dao
+    try:
+        await redis_dao.init_pools()
+        logger.info("✅ Redis connection initialized on startup")
+    except Exception as e:
+        logger.error(f"❌ Failed to initialize Redis on startup: {e}")
+        raise
+
+
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     """全局异常处理器"""
@@ -333,6 +347,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error"}
     )
+
+
 app.mount("/", StaticFiles(directory="frontend", html=True), name="static")
 
 if __name__ == "__main__":
