@@ -368,8 +368,16 @@ class GameManager:
         return re.sub(r"[^\w\-]", "_", group_id or "default")
 
     def _redis_game_key(self, group_id: str) -> str:
-        """生成游戏状态的Redis键名"""
+        """兼容旧键：game:snapshot（迁移时使用）"""
         return f"game:snapshot:{self._sanitize_group_id(group_id)}"
+
+    def _redis_meta_key(self, group_id: str) -> str:
+        """生成游戏元数据的 Redis 键名（长期存储）"""
+        return f"game:meta:{self._sanitize_group_id(group_id)}"
+
+    def _redis_messages_key(self, group_id: str) -> str:
+        """生成游戏消息的 Redis 键名（TTL 5 天，最多 15 条）"""
+        return f"game:messages:{self._sanitize_group_id(group_id)}"
 
     def _redis_lock_key(self, group_id: str) -> str:
         """生成分布式锁的Redis键名"""
@@ -396,13 +404,12 @@ class GameManager:
             3. 执行业务逻辑
             4. 将线程局部变量持久化回Redis
         """
-        redis_key = self._redis_game_key(group_id)
         lock_key = self._redis_lock_key(group_id)
 
         async def _txn():
-            await self._load_snapshot_from_redis(redis_key)
+            await self._load_snapshot_from_redis(group_id)
             result = await fn()
-            await self._persist_to_redis(redis_key)
+            await self._persist_to_redis(group_id)
             return result
 
         return await async_with_redis_lock(lock_key, _txn)
@@ -494,38 +501,67 @@ class GameManager:
         return None
 
     # ---------- persistence ----------
-    async def _persist_to_redis(self, redis_key: str) -> None:
-        """将当前线程的 game 状态持久化到 Redis"""
+    async def _persist_to_redis(self, group_id: str) -> None:
+        """将当前线程的 game 状态持久化到 Redis：元数据长期存，消息单独 key、TTL 5 天、最多 15 条"""
         if not self.game:
             return
 
-        # 确保Redis连接已初始化
         if redis_dao.redis is None:
             await redis_dao.init_pools()
 
-        # 将游戏状态转换为JSON并存储到Redis
+        self.game.messages = self.game.messages[-config.GAME_MESSAGES_MAX:]
         snapshot = self.game.to_snapshot()
-        await redis_dao.redis.set(redis_key, json.dumps(snapshot, ensure_ascii=False))
-        logger.debug(f"📁 Game state persisted to Redis key: {redis_key}")
+        meta = {k: v for k, v in snapshot.items() if k != "messages"}
+        messages_payload = [m.to_dict() for m in self.game.messages]
 
-    async def _load_snapshot_from_redis(self, redis_key: str) -> None:
-        """从Redis加载快照到线程局部变量；键不存在则置 None"""
-        # 确保Redis连接已初始化
+        meta_key = self._redis_meta_key(group_id)
+        messages_key = self._redis_messages_key(group_id)
+
+        await redis_dao.redis.set(meta_key, json.dumps(meta, ensure_ascii=False))
+        await redis_dao.redis.set(
+            messages_key,
+            json.dumps(messages_payload, ensure_ascii=False),
+            ex=config.GAME_MESSAGES_TTL_SECONDS,
+        )
+        logger.debug(f"📁 Game state persisted: meta={meta_key}, messages={messages_key}")
+
+    async def _load_snapshot_from_redis(self, group_id: str) -> None:
+        """从 Redis 加载快照到线程局部变量：先读 meta，再读 messages；支持旧键迁移；读到时刷新消息 TTL"""
         if redis_dao.redis is None:
             await redis_dao.init_pools()
+
+        meta_key = self._redis_meta_key(group_id)
+        messages_key = self._redis_messages_key(group_id)
 
         try:
-            snapshot_json = await redis_dao.redis.get(redis_key)
-            if snapshot_json is None:
+            meta_json = await redis_dao.redis.get(meta_key)
+            if meta_json is None:
+                legacy_key = self._redis_game_key(group_id)
+                legacy_json = await redis_dao.redis.get(legacy_key)
+                if legacy_json is not None:
+                    snapshot = json.loads(legacy_json)
+                    self.game = Game.from_snapshot(snapshot)
+                    await self._persist_to_redis(group_id)
+                    await redis_dao.redis.delete(legacy_key)
+                    logger.debug(f"📁 Migrated from legacy key to meta+messages: {group_id}")
+                    return
                 self.game = None
-                logger.debug(f"📁 No game state found in Redis key: {redis_key}")
+                logger.debug(f"📁 No game state found for group_id: {group_id}")
                 return
 
-            snapshot = json.loads(snapshot_json)
-            self.game = Game.from_snapshot(snapshot)
-            logger.debug(f"📁 Game state loaded from Redis key: {redis_key}")
+            meta = json.loads(meta_json)
+            messages_json = await redis_dao.redis.get(messages_key)
+            if messages_json is not None:
+                meta["messages"] = json.loads(messages_json)
+                await redis_dao.redis.expire(messages_key, config.GAME_MESSAGES_TTL_SECONDS)
+            else:
+                meta["messages"] = []
+            meta["messages"] = meta["messages"][-config.GAME_MESSAGES_MAX:]
+
+            self.game = Game.from_snapshot(meta)
+            logger.debug(f"📁 Game state loaded: meta={meta_key}, messages={messages_key}")
         except Exception as e:
-            logger.warning(f"load snapshot from redis failed: {e} (key={redis_key})")
+            logger.warning(f"load snapshot from redis failed: {e} (group_id={group_id})")
             self.game = None
 
     # ---------- openai ----------
@@ -1519,8 +1555,7 @@ class GameManager:
             group_id: 群 ID
         返回：包含游戏状态的字典
         """
-        redis_key = self._redis_game_key(group_id)
-        await self._load_snapshot_from_redis(redis_key)
+        await self._load_snapshot_from_redis(group_id)
         return self._build_status_response()
 
     async def get_narrative_state(self, group_id: str) -> dict:
@@ -1531,8 +1566,7 @@ class GameManager:
             group_id: 群 ID
         返回：包含 narrative_state 和 round 的字典
         """
-        redis_key = self._redis_game_key(group_id)
-        await self._load_snapshot_from_redis(redis_key)
+        await self._load_snapshot_from_redis(group_id)
         if not self.game or self.game.narrative_state is None:
             return {"narrative_state": None, "round": 0}
         return {
@@ -1548,8 +1582,7 @@ class GameManager:
             group_id: 群 ID
         返回：包含 state_change_log 和 event_log 的字典
         """
-        redis_key = self._redis_game_key(group_id)
-        await self._load_snapshot_from_redis(redis_key)
+        await self._load_snapshot_from_redis(group_id)
         if not self.game:
             return {"state_change_log": [], "event_log": []}
         return {

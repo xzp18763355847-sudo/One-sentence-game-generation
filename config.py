@@ -37,3 +37,7 @@ REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
 REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_DB = int(os.getenv("REDIS_DB", "0"))
 REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
+
+# 游戏消息 Redis 策略：对话单独 key，TTL 5 天，最多保留 15 条
+GAME_MESSAGES_TTL_SECONDS = 5 * 24 * 3600  # 5 天
+GAME_MESSAGES_MAX = 15
