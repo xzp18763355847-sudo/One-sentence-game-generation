@@ -134,6 +134,7 @@ async def start_offcial_game(request: StartOfficialGameRequest):
     请求体：StartOfficialGameRequest
     """
     data = request.dict()
+    logger.info("POST /api/start_offcial_game 入参: %s", data)
     group_id = _get_group_id(data)
     game_id = data.get("game_id", "").strip()
     # game_id = request.text.strip()  # 这里 text 字段实际是 game_id
@@ -215,6 +216,7 @@ async def send_message_sse(request: SendMessageRequest):
     错误时返回 400 + JSON {"error": "..."}，不走 SSE。
     """
     data = request.dict()
+    logger.info("POST /api/message_sse 入参: %s", data)
     group_id = _get_group_id(data)
     text = request.text.strip()
     player_name = request.player_name.strip() or "玩家"
