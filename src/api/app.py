@@ -1,22 +1,26 @@
-"""AI 剧情游戏 - FastAPI 应用入口."""
+"""AI 剧情游戏 - FastAPI 应用入口（与根目录 app.py 行为一致）."""
 
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from config import HOST, PORT
 from game_manager import GameManager
+from log_config import get_logger
 
+from config import HOST, PORT
 from src.api.endpoints.game_manage.router import router as game_router
 
-app = FastAPI(title="AI 剧情游戏 API")
+logger = get_logger(__name__)
+
+app = FastAPI(title="STATEM AI Game", version="2.0.0")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -24,7 +28,7 @@ app.add_middleware(
 # 注入 GameManager，供 router 依赖使用
 app.state.game_manager = GameManager()
 
-# 先注册 API 路由，保证 /api/* 优先匹配（prefix 在 include 时统一指定）
+# 先注册 API 路由，保证 /api/* 优先匹配
 app.include_router(game_router, prefix="/api")
 
 # 静态首页（路径相对于项目根，需从项目根运行）
@@ -37,17 +41,33 @@ async def serve_index() -> FileResponse:
     return FileResponse(_frontend_dir / "index.html")
 
 
-# 静态资源（可选，避免覆盖 /）
 if _frontend_dir.exists():
     app.mount("/static", StaticFiles(directory=str(_frontend_dir)), name="static")
+
+
+@app.on_event("startup")
+async def startup_event() -> None:
+    """应用启动时初始化 Redis 连接（与根目录 app.py 一致）."""
+    try:
+        from utils.redis_cache import dao as redis_dao
+        await redis_dao.init_pools()
+        logger.info("Redis connection initialized on startup")
+    except ImportError:
+        logger.warning("utils.redis_cache not found, skip Redis init")
+    except Exception as e:
+        logger.error("Failed to initialize Redis on startup: {}", e)
+        raise
+
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """全局异常处理器（与根目录 app.py 一致）."""
+    logger.error("全局异常: {}", exc, exc_info=True)
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(
-        "src.api.app:app",
-        host=HOST,
-        port=PORT,
-        reload=False,
-    )
+    logger.info("server: http://0.0.0.0:4000")
+    uvicorn.run("src.api.app:app", host=HOST, port=PORT, log_level="info")

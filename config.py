@@ -6,7 +6,7 @@ Set these environment variables before running:
 - OPENAI_MODEL: (Optional) Model to use, defaults to gpt-3.5-turbo
 """
 import os
-from pickle import TRUE
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -23,7 +23,7 @@ MAX_ROUNDS = 200
 HINT_ROUND_THRESHOLD = 10  # Start giving hints after this many rounds
 
 # 可选：是否把完整 assets/state 暴露给前端（调试用）
-DEBUG_EXPOSE_FULL_STATE = TRUE
+DEBUG_EXPOSE_FULL_STATE = True
 
 
 DEFAULT_GROUP_ID = "group001"

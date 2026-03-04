@@ -16,10 +16,13 @@ from src.api.endpoints.game_manage.schemas import (
 )
 
 # 项目根模块（需从项目根目录运行 uvicorn）
-from config import DEFAULT_GROUP_ID
+from game_manager import Game
+from game_statics.preset_games import PRESET_GAME_SNAPSHOTS
 from game_types import is_valid_game_type
 from log_config import get_logger
 from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
+
+from config import DEFAULT_GROUP_ID
 
 logger = get_logger(__name__)
 
@@ -72,34 +75,31 @@ async def start_official_game(
     req: StartOfficialGameRequest,
     gm: Any = Depends(get_game_manager),
 ) -> Any:
-    """开始官方游戏."""
+    """开始官方游戏（与根目录 app.py 一致：支持预设游戏、language_code 固定 en）."""
     gid = (req.group_id or "").strip() or DEFAULT_GROUP_ID
-    game_id = req.text
+    game_id = (req.game_id or "").strip()
     if game_id not in OFFCIAL_GAME_PROMPT:
         raise HTTPException(status_code=400, detail=f"无效的游戏ID: {game_id}")
-    logger.info("POST /api/start_official_game group_id=%s game_id=%s", gid, game_id)
-    # 检测是否为预设游戏ID，如果是则直接加载预设游戏，跳过模型生成
+    logger.info("POST /api/start_offcial_game group_id=%s game_id=%s", gid, game_id)
+    language_code = getattr(req, "language_code", None) or "en"
+
+    # 预设游戏：直接加载快照，跳过模型生成
     if game_id in PRESET_GAME_SNAPSHOTS:
-        logger.info(f"检测到预设游戏ID ({game_id})，直接加载预设游戏数据，跳过模型生成")
+        logger.info("检测到预设游戏ID (%s)，直接加载预设游戏数据，跳过模型生成", game_id)
         preset_snapshot = PRESET_GAME_SNAPSHOTS[game_id]
 
-        # 使用事务加载预设游戏并保存到对应的 group_id 快照文件
-        async def _load_preset_game():
-            # 从预设游戏快照创建 Game 对象
-            game_manager.game = Game.from_snapshot(preset_snapshot)
-            logger.info(f"预设游戏已加载到内存")
+        def _load_preset_sync() -> None:
+            gm.game = Game.from_snapshot(preset_snapshot)
+            logger.info("预设游戏已加载到内存")
 
-        # 使用事务保存预设游戏
-        await game_manager._with_txn_for_group(gid, _load_preset_game)
+        await asyncio.to_thread(gm._with_txn_for_group, gid, _load_preset_sync)
+        return await asyncio.to_thread(gm.get_status, gid)
 
-        # 返回游戏状态
-        result = await game_manager.get_status(gid)
-        return JSONResponse(result)
     return await asyncio.to_thread(
         gm.create_official_game,
         group_id=gid,
-        game_id=req.text,
-        language_code=req.language_code or "en",
+        game_id=game_id,
+        language_code=language_code,
     )
 
 
@@ -127,6 +127,8 @@ async def send_message(
         player_name=player_name,
         language_code=language_code,
     )
+    game_type = result.get("game_type") or (result.get("global_state") or {}).get("game_type")
+    logger.info("----游戏类型%s------", game_type)
     if "error" in result:
         logger.warning("POST /api/message group_id=%s error=%s", gid, result.get("error"))
         raise HTTPException(status_code=400, detail=result["error"])
@@ -157,6 +159,9 @@ async def send_message_sse(
         )
         raise HTTPException(status_code=400, detail=result["error"])
 
+    game_type = result.get("game_type") or (result.get("global_state") or {}).get("game_type")
+    logger.info("----游戏类型   %s------", game_type)
+
     transition = result.get("transition", "") or ""
     narration = result.get("narration", "") or ""
     sound = result.get("sound", "") or ""
@@ -183,7 +188,9 @@ async def send_message_sse(
 
     async def generate() -> Any:
         yield _sse_line(_wrap_reply({"transition": transition}))
-        yield _sse_line(_wrap_reply({"narration": narration, "sound": sound}))
+        # 私聊角色类不向前端返回 narration（与根目录 app.py 一致）
+        if game_type not in ("私聊角色类",):
+            yield _sse_line(_wrap_reply({"narration": narration, "sound": sound}))
         dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
         if aigc_generate is not None:
             dialogues_payload["aigc_generate"] = aigc_generate  # 多模态事件
@@ -224,10 +231,10 @@ async def get_narrative_log(
 
 @router.post("/end")
 async def end_game(
-    req: EndGameRequest,
+    group_id: str = Query(default=DEFAULT_GROUP_ID),
     gm: Any = Depends(get_game_manager),
 ) -> Any:
-    """结束游戏."""
-    gid = (req.group_id or "").strip() or DEFAULT_GROUP_ID
-    logger.info("POST /api/end group_id=%s", gid)
+    """结束游戏（与根目录 app.py 一致：group_id 为查询参数）."""
+    gid = (group_id or "").strip() or DEFAULT_GROUP_ID
+    logger.info("POST /api/end 手动结束游戏 group_id=%s", gid)
     return await asyncio.to_thread(gm.end_game, gid)

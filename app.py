@@ -19,11 +19,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from utils.log_config import get_logger
+from config import DEFAULT_GROUP_ID
 from game_manager import GameManager, Game
+from game_statics.preset_games import PRESET_GAME_SNAPSHOTS
 from game_types import is_valid_game_type
 from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
-from game_statics.preset_games import PRESET_GAME_SNAPSHOTS
+from utils.log_config import get_logger
 
 logger = get_logger(__name__)
 
@@ -40,8 +41,6 @@ app.add_middleware(
 
 # 静态文件服务
 game_manager = GameManager()
-
-DEFAULT_GROUP_ID = "group001"
 
 
 # Pydantic 模型定义
