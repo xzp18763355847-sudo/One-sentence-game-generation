@@ -898,9 +898,13 @@ class GameManager:
                 self.game.messages.append(
                     Message(role="ai", player_name="主持人", content=outline_msg, is_system=False)
                 )
+                # 角色陪伴类游戏 player_goal 设为空
+                logger.info(f"[DEBUG] game_type = {game_type}")
+                print(f"[DEBUG] game_type = {game_type}")
+                player_goal = "" if game_type in ("companion_route", "companion_open" ,"私聊角色类") else ""
                 self.game.last_turn_response = {
                     "transition": "", "narration": "", "sound": "",
-                    "dialogues": [], "hooks": {"player_goal": ""}
+                    "dialogues": [], "hooks": {"player_goal": player_goal}
                 }
                 self._log_flow("大纲生成完成", "等待用户审核/修改")
                 return self._build_status_response()
@@ -910,9 +914,13 @@ class GameManager:
                 Message(role="ai", player_name="主持人", content=start_msg, is_system=True)
             )
             # 更新 last_turn_response
+            # 角色陪伴类游戏 player_goal 设为空
+            logger.info(f"[DEBUG] gs.game_type = {gs.game_type}")
+            print(f"[DEBUG] gs.game_type = {gs.game_type}")
+            player_goal = "" if gs.game_type in ("companion_route", "companion_open","私聊角色类") else ""
             self.game.last_turn_response = {
                 "transition": "", "narration": "", "sound": "",
-                "dialogues": [], "hooks": {"player_goal": ""}
+                "dialogues": [], "hooks": {"player_goal": player_goal}
             }
             self._log_flow("开始游戏", "等待玩家输入初始想法")
             return self._build_status_response()
@@ -964,12 +972,16 @@ class GameManager:
                     )
                 )
                 # 更新 last_turn_response
+                # 角色陪伴类游戏 player_goal 设为空
+                logger.info(f"[DEBUG] gs.game_type = {gs.game_type}")
+                print(f"[DEBUG] gs.game_type = {gs.game_type}")
+                player_goal = "" if gs.game_type in ("companion_route", "companion_open","私聊角色类") else ""
                 self.game.last_turn_response = {
                     "transition": "",
                     "narration": "",
                     "sound": "",
                     "dialogues": [],
-                    "hooks": {"player_goal": ""}
+                    "hooks": {"player_goal": player_goal}
                 }
                 self._log_flow("大纲生成完成", "等待用户审核/修改")
                 return self._build_status_response()
@@ -1005,12 +1017,16 @@ class GameManager:
                         )
                     )
                     # 更新 last_turn_response
+                    # 角色陪伴类游戏 player_goal 设为空
+                    logger.info(f"[DEBUG] gs.game_type = {gs.game_type}")
+                    print(f"[DEBUG] gs.game_type = {gs.game_type}")
+                    player_goal = "" if gs.game_type in ("companion_route", "companion_open", "私聊角色类") else ""
                     self.game.last_turn_response = {
                         "transition": "",
                         "narration": "",
                         "sound": "",
                         "dialogues": [],
-                        "hooks": {"player_goal": ""}
+                        "hooks": {"player_goal": player_goal}
                     }
                     self._log_flow("大纲已更新", "等待用户确认")
                     return self._build_status_response()
@@ -1050,22 +1066,30 @@ class GameManager:
                     self.game.messages.append(Message(role="ai", player_name="主持人", content=chapter_start_msg, is_system=False))
                     
                     # 设置第一章开始的transition输出
+                    # 角色陪伴类游戏 player_goal 设为空
+                    logger.info(f"[DEBUG] gs.game_type = {gs.game_type}")
+                    print(f"[DEBUG] gs.game_type = {gs.game_type}")
+                    player_goal = "" if gs.game_type in ("companion_route", "companion_open", "私聊角色类") else ""
                     self.game.last_turn_response = {
                         "transition": "chapter_1",
                         "narration": "",
                         "sound": "",
                         "dialogues": [],
-                        "hooks": {"player_goal": ""}
+                        "hooks": {"player_goal": player_goal}
                     }
                 else:
                     self.game.messages.append(Message(role="ai", player_name="主持人", content=first, is_system=False))
                     # 更新 last_turn_response
+                    # 角色陪伴类游戏 player_goal 设为空
+                    logger.info(f"[DEBUG] gs.game_type = {gs.game_type}")
+                    print(f"[DEBUG] gs.game_type = {gs.game_type}")
+                    player_goal = "" if gs.game_type in ("companion_route", "companion_open", "私聊角色类") else ""
                     self.game.last_turn_response = {
                         "transition": "",
                         "narration": "",
                         "sound": "",
                         "dialogues": [],
-                        "hooks": {"player_goal": ""}
+                        "hooks": {"player_goal": player_goal}
                     }
 
                 self._log_flow("世界构建完成", f"genre={_genre} phase={self.game.narrative_state.phase_value}")
@@ -1200,6 +1224,11 @@ class GameManager:
                 hooks = {}
             if not isinstance(hooks.get("player_goal"), str):
                 hooks["player_goal"] = hooks.get("player_goal", "") or ""
+            # 角色陪伴类游戏 player_goal 设为空
+            logger.info(f"[DEBUG] gs.game_type = {gs.game_type}")
+            print(f"[DEBUG] gs.game_type = {gs.game_type}")
+            if gs.game_type in ("companion_route", "companion_open", "私聊角色类"):
+                hooks["player_goal"] = ""
             
             # 保存最后一条LLM返回的原始数据（确保包含所有字段）
             # narration 字段只包含当前回合的旁白
@@ -1495,18 +1524,31 @@ class GameManager:
                 result["hooks"] = {}
             if "player_goal" not in result["hooks"]:
                 result["hooks"]["player_goal"] = ""
+            # 角色陪伴类游戏 player_goal 设为空
+            logger.info(f"[DEBUG] self.game.global_state.game_type = {self.game.global_state.game_type}")
+            print(f"[DEBUG] self.game.global_state.game_type = {self.game.global_state.game_type}")
+            if self.game.global_state.game_type in ("companion_route", "companion_open", "私聊角色类"):
+                result["hooks"]["player_goal"] = ""
             
             logger.info(f"[格式化] 返回完整格式: transition={bool(result['transition'])}, narration={len(result['narration'])}字, dialogues={len(result['dialogues'])}条当前轮次对话")
             print(f"[格式化输出] {json.dumps(result, ensure_ascii=False, indent=2)}")
             return result
         
         # 如果没有保存的模型输出
+        # 角色陪伴类游戏 player_goal 设为空
+        player_goal = ""
+        if self.game:
+            game_type = self.game.global_state.game_type
+            logger.info(f"[DEBUG] self.game.global_state.game_type = {game_type}")
+            print(f"[DEBUG] self.game.global_state.game_type = {game_type}")
+            if game_type in ("companion_route", "companion_open", "私聊角色类"):
+                player_goal = ""
         result = {
             "transition": "",
             "narration": "",
             "sound": "",
             "dialogues": [],
-            "hooks": {"player_goal": ""}
+            "hooks": {"player_goal": player_goal}
         }
         logger.warning("[格式化] 没有保存的模型输出，返回空字段")
         return result
@@ -1631,9 +1673,13 @@ class GameManager:
             self.game.messages.append(
                 Message(role="ai", player_name="主持人", content=outline_msg, is_system=False)
             )
+            # 角色陪伴类游戏 player_goal 设为空
+            logger.info(f"[DEBUG] game_type = {game_type}")
+            print(f"[DEBUG] game_type = {game_type}")
+            player_goal = "" if game_type in ("companion_route", "companion_open", "私聊角色类") else ""
             self.game.last_turn_response = {
                 "transition": "", "narration": "", "sound": "",
-                "dialogues": [], "hooks": {"player_goal": ""}
+                "dialogues": [], "hooks": {"player_goal": player_goal}
             }
             self._log_flow("大纲生成完成", "等待确认")
         
