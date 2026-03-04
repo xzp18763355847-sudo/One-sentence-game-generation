@@ -1210,8 +1210,7 @@ class GameManager:
             self.game.last_turn_response = {
                 "transition": transition,
                 "narration": narrative if narrative else "",  # 只包含当前回合的旁白
-                # "sound": sound,
-                "sound": "",
+                "sound": sound,
                 "dialogues": dialogues if isinstance(dialogues, list) else [],  # 只包含当前轮次的NPC对话
                 "hooks": hooks,
                 "state_delta": state_delta_raw,
