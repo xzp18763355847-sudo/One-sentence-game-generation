@@ -257,7 +257,8 @@ async def send_message_sse(request: SendMessageRequest):
 
     async def generate():
         # 1) transition
-        yield _sse_chunk(_wrap_reply({"transition": transition}))
+        if transition:
+            yield _sse_chunk(_wrap_reply({"transition": transition}))
         # 2) narration + sound
         if game_type not in ["私聊角色类", ]:
             yield _sse_chunk(_wrap_reply({"narration": narration, "sound": sound}))

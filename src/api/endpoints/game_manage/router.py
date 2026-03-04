@@ -187,7 +187,8 @@ async def send_message_sse(
         return f"event: reply\ndata: {json.dumps(obj, ensure_ascii=False)}\n\n"
 
     async def generate() -> Any:
-        yield _sse_line(_wrap_reply({"transition": transition}))
+        if transition:
+            yield _sse_line(_wrap_reply({"transition": transition}))
         # 私聊角色类不向前端返回 narration（与根目录 app.py 一致）
         if game_type not in ("私聊角色类",):
             yield _sse_line(_wrap_reply({"narration": narration, "sound": sound}))
