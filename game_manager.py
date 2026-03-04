@@ -1200,7 +1200,10 @@ class GameManager:
                 hooks = {}
             if not isinstance(hooks.get("player_goal"), str):
                 hooks["player_goal"] = hooks.get("player_goal", "") or ""
-            
+
+            if gs.game_type in ("companion_route", "companion_open", "私聊角色类"):
+                hooks = {}   # 角色陪伴类游戏 hooks 设为空
+
             # 保存最后一条LLM返回的原始数据（确保包含所有字段）
             # narration 字段只包含当前回合的旁白
             # dialogues 只包含当前轮次的NPC对话，不累加历史
