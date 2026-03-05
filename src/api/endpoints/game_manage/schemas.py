@@ -30,7 +30,7 @@ class MessageRequest(BaseModel):
     language_code: str = "en"
 
 class SendMessageSseRequest(BaseModel):
-    group_id: str = Optional[str] = None
+    group_id: Optional[str] = None
     text: str
     player_name: str = "玩家"
     custom_variables: Optional[dict] = {}  # 扩展字段 
