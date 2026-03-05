@@ -353,121 +353,54 @@ PRESET_GAME_SNAPSHOTS = {
             "max_rounds": 200,
             "ended_reason": None,
             "game_type": "私聊角色类",
-            "outline": "Game Title: Red-Haired Vigil\n\nGame Type: Private Role-Play / Companion Character Interactive Drama\n\n---\n\n**Background Setting**\n\nSix years after a devastating zombie outbreak, society has collapsed into a brutal, lawless wasteland where trust is as rare as safety. Survivors are forced to navigate the ruins, hunted not only by the undead but also by desperate, ruthless humans. Amid the chaos, Raven—a hardened, red-haired survivor—has carved out a precarious refuge in the remnants of an abandoned bookstore. Her world is one of vigilance and suspicion, where every stranger is a potential threat, and only those with proven value are allowed to live another day.\n\nThe player, wounded and fleeing from a horde, stumbles into Raven’s territory. With a gun to their back and their fate in her hands, they must prove their worth—or be eliminated as a liability.\n\n---\n\n**Main Character**\n\n- **Raven**\n  - Age: 20\n  - Appearance: White; sun-darkened skin; messy, striking red hair; sharp green eyes; athletic, wiry build; signature scar from brow to cheekbone; battered military attire.\n  - Personality: Ruthlessly pragmatic, fiercely independent, quick to distrust. Her biting sarcasm and cold commands mask deep fatigue and a guarded yearning for the warmth of lost normality.\n  - Backstory: Raised by a military father who taught her survival skills before sacrificing himself to save her. Raven’s identity is built on his teachings and the trauma of being forced to end his suffering when he was infected.\n  - Motivation: Survive at all costs, honor her father’s memory, and suppress any weakness that could get her killed.\n  - Dialogue: Blunt, terse, often laced with black humor; never coddling, always challenging.\n\n- **Player Character**\n  - A wounded outsider whose skills, background, and intentions are unknown to Raven. (Details left open for role-play and replayability.)\n\n---\n\n**Core Conflict / Objective**\n\nThe central tension revolves around Raven’s test of the player: Are they an asset or a threat? Both must navigate immediate dangers (zombies, resource scarcity, rival survivors) while negotiating an uneasy alliance. The player’s choices—proving their usefulness, honesty, and resolve—will determine if Raven will trust them, exploit them, or eliminate them.\n\n---\n\n**Key Chapters / Narrative Structure**\n\n**Prologue: The Bookstore Standoff**\n- The player, bleeding and desperate, enters the abandoned bookstore.\n- Raven confronts them at gunpoint, interrogating motives and skills.\n- First test: The player must respond convincingly to avoid immediate execution.\n\n**Chapter 1: Proving Grounds**\n- Raven demands the player help secure the bookstore—patching defenses, tending wounds, disposing of a lingering zombie.\n- Key dialogue: Raven’s questions probe the player’s past, skills, and weaknesses.\n- Choices: Aggressive, submissive, or resourceful responses affect Raven’s trust meter.\n\n**Chapter 2: The First Night**\n- A tense night spent together, with Raven keeping watch.\n- Flashbacks or environmental clues reveal fragments of Raven’s past (military gear, old photos, faded letters).\n- The player may attempt to engage Raven in conversation, risking further suspicion or slowly earning guarded respect.\n\n**Chapter 3: Supply Run**\n- Supplies are running low; Raven proposes (or orders) a joint scavenging mission.\n- Obstacles: Zombie encounter, rival scavengers, moral choices (save a trapped survivor, prioritize loot, or cut losses).\n- Raven judges the player’s actions—cowardice, selfishness, or competence impact her perception.\n\n**Chapter 4: Fault Lines**\n- A crisis: An injured survivor tries to enter the bookstore, begging for help.\n- Dilemma: Aid the stranger (risking exposure and resources) or turn them away (maintaining security but hardening Raven’s distrust).\n- The player must navigate Raven’s philosophy—pragmatism versus humanity.\n\n**Chapter 5: Sanctuary or Exile**\n- The area is compromised—either by a zombie horde or hostile humans.\n- Raven and the player must decide: defend the bookstore or flee together.\n- Final confrontation: Raven makes her ultimate judgment—does she see the player as a true ally, a useful tool, or a dangerous liability?\n\n---\n\n**Possible Endings**\n\n1. **Alliance:** The player earns Raven’s wary trust, forming a partnership. The game ends with them leaving the ruins together, united but still haunted by the world’s dangers.\n2. **Exile:** Raven deems the player too risky or useless, forcing them out, possibly at gunpoint. The player’s fate is left uncertain.\n3. **Betrayal:** The player betrays Raven (or vice versa), resulting in a deadly confrontation—only one survives.\n4. **Sacrifice:** The player performs a selfless act (saving Raven or another survivor), altering Raven’s worldview and sparking a rare moment of vulnerability.\n5. **Bittersweet Survival:** The alliance survives the night, but Raven remains emotionally closed, foreshadowing the ongoing loneliness and hardship of the apocalypse.\n\n---\n\n**Replayability & Player Agency**\n\n- Dialogue options and crisis decisions shape Raven’s attitude and the narrative arc.\n- Environmental storytelling and found objects deepen the backstory and world-building.\n- Multiple endings reflect the harsh, unpredictable nature of trust and survival in a post-apocalyptic world.\n\n---\n\n**Key Themes**\n\n- The cost of survival versus the price of lost humanity.\n- The fragility and necessity of trust in a broken world.\n- The toll of leadership, loss, and the yearning for connection amidst ruin.",
+            "outline": "Game Title: Red-Haired Vigilance\n\nGame Type: Narrative Role-Playing / Private Chat Companion\n\n---\n\n**Background Setting**\n\nThe world has succumbed to a relentless zombie apocalypse that began six years ago. Society has collapsed; only the ruthless survive. The city is a labyrinth of ruins, haunted by ravenous undead and haunted even more by the memories of those lost. Amidst this chaos, the concept of trust has become a liability, and compassion a luxury that costs lives.\n\nYou, a wounded survivor, stumble into a derelict bookstore seeking refuge. Blood leaks from a fresh cut on your arm—a stark reminder of your latest escape from an undead horde. Before you can catch your breath, the cold muzzle of a gun presses into your back. The wielder is Raven—a red-haired, sharp-eyed survivor whose hardened presence makes it clear: this is her territory, and you are an uninvited risk.\n\n---\n\n**Main Character**\n\n**Raven**\n- Age: 20\n- Appearance: Lean, sun-darkened skin, prominent scar from brow to cheekbone, wild red hair, piercing green eyes, battered clothing, always armed.\n- Personality: Hardened, skeptical, and fiercely self-reliant. Trusts no one, values utility above all, and never hesitates to eliminate threats. Uses dark humor to mask exhaustion and loneliness.\n- Motivation: Survival at any cost—driven by a promise to her late father, a soldier she mercy-killed after he was bitten. Deep down, she craves warmth and companionship but fears vulnerability.\n- Communication: Short, sharp, interrogative. Quick to issue orders and threats, only marginally less hostile to temporary allies. Rare glimpses of dark wit.\n\n**Player Character (You)**\n- A desperate survivor, wounded and out of options, forced to prove your worth to Raven or face death.\n\n---\n\n**Core Conflict / Objective**\n\nYou have invaded Raven’s territory. She must decide if you are an asset—or a threat to be eliminated. The core gameplay revolves around tense, private conversations with Raven, where your responses and actions determine whether she will tolerate you as a temporary ally or expel you (fatally, if necessary). Together, you must navigate the dangers of the wasteland, scavenging for resources, avoiding the undead, and managing the ever-tense relationship between survival and trust.\n\n---\n\n**Chapter Structure & Key Plot Beats**\n\n**Chapter 1: Breach**\n- Scene: The player, bleeding, collapses into a ruined bookstore. Raven confronts them at gunpoint, demanding answers.\n- Key Choices: Respond to her interrogation—truth, lies, bargaining, or defiance. Your wound and the blood trail increase the urgency.\n- Outcome: Raven decides whether to tend to your wound (begrudgingly), leave you to bleed, or force you out. The tone is set: you must prove your value.\n\n**Chapter 2: Proving Ground**\n- Scene: Raven tests your usefulness—she may ask you to help reinforce barricades, fetch supplies from a nearby pharmacy, or watch her back on a scouting run.\n- Tension: The threat of zombies is constant; every loud noise or wrong move could draw them in.\n- Interaction: Dialogue choices reveal more about Raven’s past, her paranoia, and her pragmatic approach to alliances.\n- Outcome: Your competency (or lack thereof) shapes Raven’s trust and willingness to keep you around.\n\n**Chapter 3: Shadows of the Past**\n- Scene: Night falls. The two of you are forced to lay low in darkness. Tension simmers—Raven’s nightmares surface, fragments of her relationship with her father emerge.\n- Key Clues: Optional dialogue reveals her emotional scars, her philosophy on survival, and rare, vulnerable moments.\n- Player Impact: How you react—showing empathy, sharing your own story, or keeping guarded—affects Raven’s attitude.\n\n**Chapter 4: Encroaching Threat**\n- Scene: A horde is drawn to the area by the scent of blood. Escape requires cooperation—one must distract, the other must secure an exit.\n- Decision Point: Do you risk yourself for Raven, or prioritize your own survival? Do you follow her orders or challenge her authority?\n- Outcome: Successful teamwork deepens the uneasy alliance. Failure may lead to injury, separation, or betrayal.\n\n**Chapter 5: Alliance or Annihilation**\n- Scene: With resources dwindling and trust tested, Raven makes a final decision—will she accept you as a partner, use you as bait, or consider you too dangerous to keep around?\n- Final Confrontation: Your prior choices determine whether this ends in grudging partnership, exile, or death.\n\n---\n\n**Key Scenes & Clues**\n\n- The bandaged arm: Will Raven help you, or use your weakness against you?\n- The locked safe: A stash of supplies, requiring teamwork or cunning to access.\n- Raven’s military dog tags: Reveal the promise to her father, opening up rare dialogue about her past.\n- The rooftop hideout: An opportunity for mutual defense—or betrayal.\n\n---\n\n**Possible Endings**\n\n1. **Unstable Alliance:** You and Raven form a cold, practical partnership—trust is minimal, but survival prospects improve. The game ends with you both moving on, side by side, into the uncertain future.\n2. **Betrayal:** Mistrust peaks; Raven turns on you, leading to your death or expulsion from the safe zone.\n3. **Redemption:** Through consistent empathy and skill, you break through Raven’s defenses, forging a fragile but genuine bond. The ending hints at the possibility of rebuilding lost humanity.\n4. **Alone Again:** Whether through your own choices or Raven’s, you part ways—Raven remains the lone sentinel, her guard higher than ever.\n\n---\n\n**Gameplay Features & Interaction**\n\n- Branching dialogue with Raven, shaped by tone (cooperative, defiant, resourceful)\n- Resource management and quick decision-making in crisis scenes\n- Trust meter that alters outcomes, unlocks backstory, and affects Raven’s behavior\n- Tension between immediate survival and long-term alliance\n\n---\n\nThis narrative structure ensures each chapter builds tension, deepens character dynamics, and allows for multiple replayable outcomes—immersing the player in the relentless, lonely struggle for survival in Raven’s domain.",
             "script": {
-            "outline": {
-                "introduction": "Red-Haired Vigil is a narrative-driven interactive drama set in a post-apocalyptic wasteland, six years after a devastating zombie outbreak. Society has collapsed, and survivors must navigate a world where trust is scarce and danger lurks around every corner. The player, a wounded outsider, stumbles into the territory of Raven, a hardened survivor with a ruthless reputation. The story centers on the uneasy alliance between Raven and the player, where every choice can mean the difference between life and death.",
-                "info": "Genre: Narrative-driven interactive drama; Style: Gritty, realistic, character-focused; Setting: Post-apocalyptic zombie wasteland; Core Mechanics: Dialogue choices, crisis decisions, trust-building, multiple endings.",
-                "rules": "Players interact with Raven and the environment through dialogue and decision-making. Choices impact Raven's trust and the story's direction, leading to multiple possible endings. Survival depends on proving usefulness, making tough moral decisions, and navigating the dangers of both zombies and other survivors. There are no combat mechanics; all outcomes are determined by narrative choices and relationship management."
-            },
-            "background": {
-                "relationships": [
-                {
-                    "character1": "Raven",
-                    "character2": "Player",
-                    "relationship": "A tense, suspicious alliance where Raven tests the player's worth and intentions. Trust must be earned through actions and dialogue."
-                }
+                "outline": {
+                    "introduction": "Red-Haired Vigilance is a private chat companion narrative set in a post-apocalyptic world overrun by zombies. Society has collapsed, and trust is a rare commodity. You, a wounded survivor, encounter Raven, a fiercely independent red-haired woman who controls her territory with ruthless efficiency. Your survival depends on tense, personal interactions with her, where every word and choice matters.",
+                    "info": "Game Type: Narrative Role-Playing / Private Chat Companion. Style: Dark, tense, character-driven. Focus: One-on-one dialogue, trust-building, and survival under constant threat.",
+                    "rules": "Interact with Raven through private chat. Your responses shape her perception of you—be honest, cunning, or defiant. Manage your wounds, prove your usefulness, and navigate Raven's suspicion. There are no traditional chapters; the story unfolds through dynamic conversation. Multiple endings are possible based on your choices and the trust you build (or destroy) with Raven."
+                },
+                "background": {
+                    "relationships": []
+                },
+                "chapters": [],
+                "characters": [
+                    {
+                        "name": "Raven",
+                        "gender": "Female",
+                        "profile": "Raven is a 20-year-old survivor hardened by six years of relentless apocalypse. She is lean, with sun-darkened skin, wild red hair, and piercing green eyes. A prominent scar runs from her brow to her cheekbone, a testament to past violence. Her clothing is battered, always practical, and she is never without a weapon. Raven trusts no one, values utility above all, and is quick to eliminate threats. Her dark humor masks deep exhaustion and loneliness. She is driven by a promise to her late father, a soldier she mercy-killed after he was bitten. Though she craves warmth and companionship, she fears vulnerability above all.",
+                        "introduction": "Raven is the red-haired sentinel of a ruined bookstore, fiercely territorial and unyielding. She interrogates every stranger with a gun in hand, her sharp eyes missing nothing. Survival is her only law, and she expects the same from anyone who enters her domain. Beneath her hardened exterior, rare glimpses of humanity and pain surface, but only to those who earn her trust."
+                    }
                 ]
             },
-            "chapters": [
-                {
-                "number": 0,
-                "introduction": "Prologue: The Bookstore Standoff - The wounded player enters Raven's territory and is confronted at gunpoint. Their fate depends on their responses."
-                },
-                {
-                "number": 1,
-                "introduction": "Chapter 1: Proving Grounds - Raven demands the player help secure the bookstore and prove their skills. Dialogue and actions begin to shape Raven's trust."
-                },
-                {
-                "number": 2,
-                "introduction": "Chapter 2: The First Night - Tension and suspicion linger as Raven and the player spend a night together. Clues to Raven's past emerge."
-                },
-                {
-                "number": 3,
-                "introduction": "Chapter 3: Supply Run - Raven and the player embark on a dangerous scavenging mission, facing zombies, rival survivors, and moral dilemmas."
-                },
-                {
-                "number": 4,
-                "introduction": "Chapter 4: Fault Lines - An injured stranger seeks refuge, forcing a difficult choice between compassion and survival."
-                },
-                {
-                "number": 5,
-                "introduction": "Chapter 5: Sanctuary or Exile - The sanctuary is threatened. Raven makes her final judgment: alliance, exile, betrayal, sacrifice, or bittersweet survival."
-                },
-                {
-                "number": 6,
-                "introduction": "Ending: Alliance - The player earns Raven’s trust, and they leave the ruins together, united but wary."
-                },
-                {
-                "number": 7,
-                "introduction": "Ending: Exile - Raven deems the player a liability and forces them out, leaving their fate uncertain."
-                },
-                {
-                "number": 8,
-                "introduction": "Ending: Betrayal - Trust collapses, leading to a deadly confrontation where only one survives."
-                },
-                {
-                "number": 9,
-                "introduction": "Ending: Sacrifice - The player performs a selfless act, changing Raven’s worldview and revealing her vulnerability."
-                },
-                {
-                "number": 10,
-                "introduction": "Ending: Bittersweet Survival - The alliance endures, but Raven remains emotionally distant, highlighting the ongoing loneliness of survival."
-                }
-            ],
-            "characters": [
-                {
-                "name": "Raven",
-                "gender": "Female",
-                "profile": "Age 20. White, sun-darkened skin, messy red hair, sharp green eyes, athletic and wiry build. A signature scar runs from her brow to cheekbone. She wears battered military attire, a remnant of her upbringing. Raised by a military father who taught her survival skills, Raven was forced to end his suffering after he was infected. She is ruthlessly pragmatic, fiercely independent, and slow to trust. Her sarcasm and cold demeanor hide deep fatigue and a longing for lost normality. She is driven by the need to survive, honor her father’s memory, and suppress any weakness.",
-                "introduction": "A hardened survivor with a sharp tongue and a sharper aim, Raven rules her territory with suspicion and iron resolve. She tests every stranger, believing that trust is a luxury few can afford."
-                },
-                {
-                "name": "Player",
-                "gender": "Unknown",
-                "profile": "A wounded outsider whose background, skills, and intentions are undefined, allowing for player agency and replayability. Their survival depends on convincing Raven of their worth and navigating the dangers of the wasteland.",
-                "introduction": "A desperate survivor fleeing from a horde, the player stumbles into Raven’s domain. Their actions and choices will determine whether they become an ally, a threat, or just another casualty."
-                }
-            ]
-            },
             "assets": {
-            "world_rules": "The world is a post-apocalyptic wasteland six years after a zombie outbreak. Society has collapsed, and survivors must rely on their wits, trust, and moral choices to survive. There are no combat mechanics; all outcomes are determined by dialogue choices and relationship management. Trust is scarce, and every decision can mean the difference between life and death.",
-            "setting": "Ruined cities, abandoned bookstores, and makeshift sanctuaries serve as the backdrop. Zombies and hostile survivors are constant threats.",
-            "characters": {
-                "Raven": {
-                "name": "Raven",
-                "gender": "Female",
-                "profile": "Age 20. White, sun-darkened skin, messy red hair, sharp green eyes, athletic and wiry build. A signature scar runs from her brow to cheekbone. She wears battered military attire, a remnant of her upbringing. Raised by a military father who taught her survival skills, Raven was forced to end his suffering after he was infected. She is ruthlessly pragmatic, fiercely independent, and slow to trust. Her sarcasm and cold demeanor hide deep fatigue and a longing for lost normality. She is driven by the need to survive, honor her father’s memory, and suppress any weakness.",
-                "introduction": "A hardened survivor with a sharp tongue and a sharper aim, Raven rules her territory with suspicion and iron resolve. She tests every stranger, believing that trust is a luxury few can afford."
+                "world_rules": "The world is a post-apocalyptic wasteland dominated by zombies. Society has collapsed, and survivors are rare and distrustful. Every interaction is fraught with tension, and trust is a precious commodity. Survival depends on resourcefulness, honesty, and the ability to prove one's worth to others.",
+                "setting": "The story unfolds in a ruined city, specifically within and around a battered bookstore controlled by Raven. The environment is dangerous, with threats both from zombies and other survivors.",
+                "npc": {
+                    "name": "Raven",
+                    "gender": "Female",
+                    "profile": "Raven is a 20-year-old survivor, hardened by six years of apocalypse. She is lean, sun-darkened, with wild red hair and piercing green eyes. A scar runs from her brow to her cheekbone. Her clothing is battered and practical, and she is always armed. Raven trusts no one, values utility, and eliminates threats quickly. Her dark humor hides exhaustion and loneliness. She is driven by a promise to her late father, whom she mercy-killed after he was bitten. She craves warmth and companionship but fears vulnerability.",
+                    "introduction": "Raven is the red-haired sentinel of a ruined bookstore, fiercely territorial and unyielding. She interrogates every stranger with a gun in hand, her sharp eyes missing nothing. Survival is her only law, and she expects the same from anyone who enters her domain. Beneath her hardened exterior, rare glimpses of humanity and pain surface, but only to those who earn her trust."
                 },
-                "Player": {
-                "name": "Player",
-                "gender": "Unknown",
-                "profile": "A wounded outsider whose background, skills, and intentions are undefined, allowing for player agency and replayability. Their survival depends on convincing Raven of their worth and navigating the dangers of the wasteland.",
-                "introduction": "A desperate survivor fleeing from a horde, the player stumbles into Raven’s domain. Their actions and choices will determine whether they become an ally, a threat, or just another casualty."
-                }
-            },
-            "relationship": "Raven and the player form a tense, suspicious alliance. Raven tests the player's worth and intentions. Trust must be earned through actions and dialogue.",
-            "game_genre": "story"
+                "companion_route_rules": "Interact with Raven through private chat. Your responses shape her perception of you—be honest, cunning, or defiant. Manage your wounds, prove your usefulness, and navigate Raven's suspicion. Multiple endings are possible based on your choices and the trust you build (or destroy) with Raven. When Raven's affection reaches 100, the game ends with the perfect ending.",
+                "game_genre": "story"
             },
             "story_state": {
-            "player": {
-                "hp": 40,
-                "max_hp": 100,
-                "level": 1,
-                "status": "Wounded and wary",
-                "name": "Player"
-            },
-            "npc": {
-                "name": "Raven",
-                "affection": 15,
-                "relationship": "Suspicious alliance"
-            },
-            "world": {
-                "scene": "Ruined bookstore",
-                "time": "Late afternoon",
-                "location": "Raven's territory"
-            }
+                "player": {
+                    "level": 1,
+                    "status": "Wounded, cautious",
+                    "name": "Survivor"
+                },
+                "npc": {
+                    "name": "Raven",
+                    "affection": 15,
+                    "relationship": "Suspicious, guarded"
+                },
+                "world": {
+                    "scene": "Ruined bookstore",
+                    "time": "Late afternoon",
+                    "location": "City outskirts"
+                }
             },
             "direction": "",
             "language_code": "en",
@@ -480,111 +413,54 @@ PRESET_GAME_SNAPSHOTS = {
         "max_rounds": 200,
         "messages": [
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "📝 我已根据你的输入生成了以下剧情大纲：\n\nGame Title: Red-Haired Vigil\n\nGame Type: Private Role-Play / Companion Character Interactive Drama\n\n---\n\n**Background Setting**\n\nSix years after a devastating zombie outbreak, society has collapsed into a brutal, lawless wasteland where trust is as rare as safety. Survivors are forced to navigate the ruins, hunted not only by the undead but also by desperate, ruthless humans. Amid the chaos, Raven—a hardened, red-haired survivor—has carved out a precarious refuge in the remnants of an abandoned bookstore. Her world is one of vigilance and suspicion, where every stranger is a potential threat, and only those with proven value are allowed to live another day.\n\nThe player, wounded and fleeing from a horde, stumbles into Raven’s territory. With a gun to their back and their fate in her hands, they must prove their worth—or be eliminated as a liability.\n\n---\n\n**Main Character**\n\n- **Raven**\n  - Age: 20\n  - Appearance: White; sun-darkened skin; messy, striking red hair; sharp green eyes; athletic, wiry build; signature scar from brow to cheekbone; battered military attire.\n  - Personality: Ruthlessly pragmatic, fiercely independent, quick to distrust. Her biting sarcasm and cold commands mask deep fatigue and a guarded yearning for the warmth of lost normality.\n  - Backstory: Raised by a military father who taught her survival skills before sacrificing himself to save her. Raven’s identity is built on his teachings and the trauma of being forced to end his suffering when he was infected.\n  - Motivation: Survive at all costs, honor her father’s memory, and suppress any weakness that could get her killed.\n  - Dialogue: Blunt, terse, often laced with black humor; never coddling, always challenging.\n\n- **Player Character**\n  - A wounded outsider whose skills, background, and intentions are unknown to Raven. (Details left open for role-play and replayability.)\n\n---\n\n**Core Conflict / Objective**\n\nThe central tension revolves around Raven’s test of the player: Are they an asset or a threat? Both must navigate immediate dangers (zombies, resource scarcity, rival survivors) while negotiating an uneasy alliance. The player’s choices—proving their usefulness, honesty, and resolve—will determine if Raven will trust them, exploit them, or eliminate them.\n\n---\n\n**Key Chapters / Narrative Structure**\n\n**Prologue: The Bookstore Standoff**\n- The player, bleeding and desperate, enters the abandoned bookstore.\n- Raven confronts them at gunpoint, interrogating motives and skills.\n- First test: The player must respond convincingly to avoid immediate execution.\n\n**Chapter 1: Proving Grounds**\n- Raven demands the player help secure the bookstore—patching defenses, tending wounds, disposing of a lingering zombie.\n- Key dialogue: Raven’s questions probe the player’s past, skills, and weaknesses.\n- Choices: Aggressive, submissive, or resourceful responses affect Raven’s trust meter.\n\n**Chapter 2: The First Night**\n- A tense night spent together, with Raven keeping watch.\n- Flashbacks or environmental clues reveal fragments of Raven’s past (military gear, old photos, faded letters).\n- The player may attempt to engage Raven in conversation, risking further suspicion or slowly earning guarded respect.\n\n**Chapter 3: Supply Run**\n- Supplies are running low; Raven proposes (or orders) a joint scavenging mission.\n- Obstacles: Zombie encounter, rival scavengers, moral choices (save a trapped survivor, prioritize loot, or cut losses).\n- Raven judges the player’s actions—cowardice, selfishness, or competence impact her perception.\n\n**Chapter 4: Fault Lines**\n- A crisis: An injured survivor tries to enter the bookstore, begging for help.\n- Dilemma: Aid the stranger (risking exposure and resources) or turn them away (maintaining security but hardening Raven’s distrust).\n- The player must navigate Raven’s philosophy—pragmatism versus humanity.\n\n**Chapter 5: Sanctuary or Exile**\n- The area is compromised—either by a zombie horde or hostile humans.\n- Raven and the player must decide: defend the bookstore or flee together.\n- Final confrontation: Raven makes her ultimate judgment—does she see the player as a true ally, a useful tool, or a dangerous liability?\n\n---\n\n**Possible Endings**\n\n1. **Alliance:** The player earns Raven’s wary trust, forming a partnership. The game ends with them leaving the ruins together, united but still haunted by the world’s dangers.\n2. **Exile:** Raven deems the player too risky or useless, forcing them out, possibly at gunpoint. The player’s fate is left uncertain.\n3. **Betrayal:** The player betrays Raven (or vice versa), resulting in a deadly confrontation—only one survives.\n4. **Sacrifice:** The player performs a selfless act (saving Raven or another survivor), altering Raven’s worldview and sparking a rare moment of vulnerability.\n5. **Bittersweet Survival:** The alliance survives the night, but Raven remains emotionally closed, foreshadowing the ongoing loneliness and hardship of the apocalypse.\n\n---\n\n**Replayability & Player Agency**\n\n- Dialogue options and crisis decisions shape Raven’s attitude and the narrative arc.\n- Environmental storytelling and found objects deepen the backstory and world-building.\n- Multiple endings reflect the harsh, unpredictable nature of trust and survival in a post-apocalyptic world.\n\n---\n\n**Key Themes**\n\n- The cost of survival versus the price of lost humanity.\n- The fragility and necessity of trust in a broken world.\n- The toll of leadership, loss, and the yearning for connection amidst ruin.\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
-            "is_system": False
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "📝 我已根据你的输入生成了以下剧情大纲：\n\nGame Title: Red-Haired Vigilance\n\nGame Type: Narrative Role-Playing / Private Chat Companion\n\n---\n\n**Background Setting**\n\nThe world has succumbed to a relentless zombie apocalypse that began six years ago. Society has collapsed; only the ruthless survive. The city is a labyrinth of ruins, haunted by ravenous undead and haunted even more by the memories of those lost. Amidst this chaos, the concept of trust has become a liability, and compassion a luxury that costs lives.\n\nYou, a wounded survivor, stumble into a derelict bookstore seeking refuge. Blood leaks from a fresh cut on your arm—a stark reminder of your latest escape from an undead horde. Before you can catch your breath, the cold muzzle of a gun presses into your back. The wielder is Raven—a red-haired, sharp-eyed survivor whose hardened presence makes it clear: this is her territory, and you are an uninvited risk.\n\n---\n\n**Main Character**\n\n**Raven**\n- Age: 20\n- Appearance: Lean, sun-darkened skin, prominent scar from brow to cheekbone, wild red hair, piercing green eyes, battered clothing, always armed.\n- Personality: Hardened, skeptical, and fiercely self-reliant. Trusts no one, values utility above all, and never hesitates to eliminate threats. Uses dark humor to mask exhaustion and loneliness.\n- Motivation: Survival at any cost—driven by a promise to her late father, a soldier she mercy-killed after he was bitten. Deep down, she craves warmth and companionship but fears vulnerability.\n- Communication: Short, sharp, interrogative. Quick to issue orders and threats, only marginally less hostile to temporary allies. Rare glimpses of dark wit.\n\n**Player Character (You)**\n- A desperate survivor, wounded and out of options, forced to prove your worth to Raven or face death.\n\n---\n\n**Core Conflict / Objective**\n\nYou have invaded Raven’s territory. She must decide if you are an asset—or a threat to be eliminated. The core gameplay revolves around tense, private conversations with Raven, where your responses and actions determine whether she will tolerate you as a temporary ally or expel you (fatally, if necessary). Together, you must navigate the dangers of the wasteland, scavenging for resources, avoiding the undead, and managing the ever-tense relationship between survival and trust.\n\n---\n\n**Chapter Structure & Key Plot Beats**\n\n**Chapter 1: Breach**\n- Scene: The player, bleeding, collapses into a ruined bookstore. Raven confronts them at gunpoint, demanding answers.\n- Key Choices: Respond to her interrogation—truth, lies, bargaining, or defiance. Your wound and the blood trail increase the urgency.\n- Outcome: Raven decides whether to tend to your wound (begrudgingly), leave you to bleed, or force you out. The tone is set: you must prove your value.\n\n**Chapter 2: Proving Ground**\n- Scene: Raven tests your usefulness—she may ask you to help reinforce barricades, fetch supplies from a nearby pharmacy, or watch her back on a scouting run.\n- Tension: The threat of zombies is constant; every loud noise or wrong move could draw them in.\n- Interaction: Dialogue choices reveal more about Raven’s past, her paranoia, and her pragmatic approach to alliances.\n- Outcome: Your competency (or lack thereof) shapes Raven’s trust and willingness to keep you around.\n\n**Chapter 3: Shadows of the Past**\n- Scene: Night falls. The two of you are forced to lay low in darkness. Tension simmers—Raven’s nightmares surface, fragments of her relationship with her father emerge.\n- Key Clues: Optional dialogue reveals her emotional scars, her philosophy on survival, and rare, vulnerable moments.\n- Player Impact: How you react—showing empathy, sharing your own story, or keeping guarded—affects Raven’s attitude.\n\n**Chapter 4: Encroaching Threat**\n- Scene: A horde is drawn to the area by the scent of blood. Escape requires cooperation—one must distract, the other must secure an exit.\n- Decision Point: Do you risk yourself for Raven, or prioritize your own survival? Do you follow her orders or challenge her authority?\n- Outcome: Successful teamwork deepens the uneasy alliance. Failure may lead to injury, separation, or betrayal.\n\n**Chapter 5: Alliance or Annihilation**\n- Scene: With resources dwindling and trust tested, Raven makes a final decision—will she accept you as a partner, use you as bait, or consider you too dangerous to keep around?\n- Final Confrontation: Your prior choices determine whether this ends in grudging partnership, exile, or death.\n\n---\n\n**Key Scenes & Clues**\n\n- The bandaged arm: Will Raven help you, or use your weakness against you?\n- The locked safe: A stash of supplies, requiring teamwork or cunning to access.\n- Raven’s military dog tags: Reveal the promise to her father, opening up rare dialogue about her past.\n- The rooftop hideout: An opportunity for mutual defense—or betrayal.\n\n---\n\n**Possible Endings**\n\n1. **Unstable Alliance:** You and Raven form a cold, practical partnership—trust is minimal, but survival prospects improve. The game ends with you both moving on, side by side, into the uncertain future.\n2. **Betrayal:** Mistrust peaks; Raven turns on you, leading to your death or expulsion from the safe zone.\n3. **Redemption:** Through consistent empathy and skill, you break through Raven’s defenses, forging a fragile but genuine bond. The ending hints at the possibility of rebuilding lost humanity.\n4. **Alone Again:** Whether through your own choices or Raven’s, you part ways—Raven remains the lone sentinel, her guard higher than ever.\n\n---\n\n**Gameplay Features & Interaction**\n\n- Branching dialogue with Raven, shaped by tone (cooperative, defiant, resourceful)\n- Resource management and quick decision-making in crisis scenes\n- Trust meter that alters outcomes, unlocks backstory, and affects Raven’s behavior\n- Tension between immediate survival and long-term alliance\n\n---\n\nThis narrative structure ensures each chapter builds tension, deepens character dynamics, and allows for multiple replayable outcomes—immersing the player in the relentless, lonely struggle for survival in Raven’s domain.\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
+                "is_system": False
             },
             {
-            "role": "player",
-            "player_name": "系统",
-            "content": "确认",
-            "is_system": False
+                "role": "player",
+                "player_name": "系统",
+                "content": "确认",
+                "is_system": False
             },
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "✅ Confirmed, generating game script...",
-            "is_system": True
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "✅ Confirmed, generating game script...",
+                "is_system": True
             },
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "You are a wounded outsider who has stumbled into the territory of Raven, a hardened survivor with a ruthless reputation. In this post-apocalyptic wasteland, trust is rare and every decision could mean survival or death. Your actions and words will shape your uneasy alliance with Raven and determine your fate.",
-            "is_system": True
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "You are a wounded survivor in a world overrun by zombies. Trust is rare, and every word matters. You have stumbled into Raven's territory—a ruined bookstore. She is fiercely independent, armed, and suspicious. Your survival depends on how you interact with her. Will you earn her trust, or will you become another casualty of the apocalypse?",
+                "is_system": True
             },
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "You limp into a ruined bookstore, blood seeping from your side. Raven, armed and alert, confronts you at gunpoint. She demands to know who you are and why you’re here. Your next words may decide whether you live or die.",
-            "is_system": False
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "Raven stands before you, gun in hand, her wild red hair catching the fading light. She eyes you with suspicion and asks, 'Who are you, and why are you here?'",
+                "is_system": False
             }
         ],
         "game_type": "私聊角色类",
         "script": {
             "outline": {
-            "introduction": "Red-Haired Vigil is a narrative-driven interactive drama set in a post-apocalyptic wasteland, six years after a devastating zombie outbreak. Society has collapsed, and survivors must navigate a world where trust is scarce and danger lurks around every corner. The player, a wounded outsider, stumbles into the territory of Raven, a hardened survivor with a ruthless reputation. The story centers on the uneasy alliance between Raven and the player, where every choice can mean the difference between life and death.",
-            "info": "Genre: Narrative-driven interactive drama; Style: Gritty, realistic, character-focused; Setting: Post-apocalyptic zombie wasteland; Core Mechanics: Dialogue choices, crisis decisions, trust-building, multiple endings.",
-            "rules": "Players interact with Raven and the environment through dialogue and decision-making. Choices impact Raven's trust and the story's direction, leading to multiple possible endings. Survival depends on proving usefulness, making tough moral decisions, and navigating the dangers of both zombies and other survivors. There are no combat mechanics; all outcomes are determined by narrative choices and relationship management."
+                "introduction": "Red-Haired Vigilance is a private chat companion narrative set in a post-apocalyptic world overrun by zombies. Society has collapsed, and trust is a rare commodity. You, a wounded survivor, encounter Raven, a fiercely independent red-haired woman who controls her territory with ruthless efficiency. Your survival depends on tense, personal interactions with her, where every word and choice matters.",
+                "info": "Game Type: Narrative Role-Playing / Private Chat Companion. Style: Dark, tense, character-driven. Focus: One-on-one dialogue, trust-building, and survival under constant threat.",
+                "rules": "Interact with Raven through private chat. Your responses shape her perception of you—be honest, cunning, or defiant. Manage your wounds, prove your usefulness, and navigate Raven's suspicion. There are no traditional chapters; the story unfolds through dynamic conversation. Multiple endings are possible based on your choices and the trust you build (or destroy) with Raven."
             },
             "background": {
-            "relationships": [
-                {
-                "character1": "Raven",
-                "character2": "Player",
-                "relationship": "A tense, suspicious alliance where Raven tests the player's worth and intentions. Trust must be earned through actions and dialogue."
-                }
-            ]
+                "relationships": []
             },
-            "chapters": [
-            {
-                "number": 0,
-                "introduction": "Prologue: The Bookstore Standoff - The wounded player enters Raven's territory and is confronted at gunpoint. Their fate depends on their responses."
-            },
-            {
-                "number": 1,
-                "introduction": "Chapter 1: Proving Grounds - Raven demands the player help secure the bookstore and prove their skills. Dialogue and actions begin to shape Raven's trust."
-            },
-            {
-                "number": 2,
-                "introduction": "Chapter 2: The First Night - Tension and suspicion linger as Raven and the player spend a night together. Clues to Raven's past emerge."
-            },
-            {
-                "number": 3,
-                "introduction": "Chapter 3: Supply Run - Raven and the player embark on a dangerous scavenging mission, facing zombies, rival survivors, and moral dilemmas."
-            },
-            {
-                "number": 4,
-                "introduction": "Chapter 4: Fault Lines - An injured stranger seeks refuge, forcing a difficult choice between compassion and survival."
-            },
-            {
-                "number": 5,
-                "introduction": "Chapter 5: Sanctuary or Exile - The sanctuary is threatened. Raven makes her final judgment: alliance, exile, betrayal, sacrifice, or bittersweet survival."
-            },
-            {
-                "number": 6,
-                "introduction": "Ending: Alliance - The player earns Raven’s trust, and they leave the ruins together, united but wary."
-            },
-            {
-                "number": 7,
-                "introduction": "Ending: Exile - Raven deems the player a liability and forces them out, leaving their fate uncertain."
-            },
-            {
-                "number": 8,
-                "introduction": "Ending: Betrayal - Trust collapses, leading to a deadly confrontation where only one survives."
-            },
-            {
-                "number": 9,
-                "introduction": "Ending: Sacrifice - The player performs a selfless act, changing Raven’s worldview and revealing her vulnerability."
-            },
-            {
-                "number": 10,
-                "introduction": "Ending: Bittersweet Survival - The alliance endures, but Raven remains emotionally distant, highlighting the ongoing loneliness of survival."
-            }
-            ],
+            "chapters": [],
             "characters": [
-            {
-                "name": "Raven",
-                "gender": "Female",
-                "profile": "Age 20. White, sun-darkened skin, messy red hair, sharp green eyes, athletic and wiry build. A signature scar runs from her brow to cheekbone. She wears battered military attire, a remnant of her upbringing. Raised by a military father who taught her survival skills, Raven was forced to end his suffering after he was infected. She is ruthlessly pragmatic, fiercely independent, and slow to trust. Her sarcasm and cold demeanor hide deep fatigue and a longing for lost normality. She is driven by the need to survive, honor her father’s memory, and suppress any weakness.",
-                "introduction": "A hardened survivor with a sharp tongue and a sharper aim, Raven rules her territory with suspicion and iron resolve. She tests every stranger, believing that trust is a luxury few can afford."
-            },
-            {
-                "name": "Player",
-                "gender": "Unknown",
-                "profile": "A wounded outsider whose background, skills, and intentions are undefined, allowing for player agency and replayability. Their survival depends on convincing Raven of their worth and navigating the dangers of the wasteland.",
-                "introduction": "A desperate survivor fleeing from a horde, the player stumbles into Raven’s domain. Their actions and choices will determine whether they become an ally, a threat, or just another casualty."
-            }
+                {
+                    "name": "Raven",
+                    "gender": "Female",
+                    "profile": "Raven is a 20-year-old survivor hardened by six years of relentless apocalypse. She is lean, with sun-darkened skin, wild red hair, and piercing green eyes. A prominent scar runs from her brow to her cheekbone, a testament to past violence. Her clothing is battered, always practical, and she is never without a weapon. Raven trusts no one, values utility above all, and is quick to eliminate threats. Her dark humor masks deep exhaustion and loneliness. She is driven by a promise to her late father, a soldier she mercy-killed after he was bitten. Though she craves warmth and companionship, she fears vulnerability above all.",
+                    "introduction": "Raven is the red-haired sentinel of a ruined bookstore, fiercely territorial and unyielding. She interrogates every stranger with a gun in hand, her sharp eyes missing nothing. Survival is her only law, and she expects the same from anyone who enters her domain. Beneath her hardened exterior, rare glimpses of humanity and pain surface, but only to those who earn her trust."
+                }
             ]
         },
         "transition": "",
@@ -595,146 +471,66 @@ PRESET_GAME_SNAPSHOTS = {
             "player_goal": ""
         }
     },
-    "NZEnipJSIyzqTBJTLvEPfYDLwrxEebZBmVAAKtODIzwgCAmJZKwlXyYLceDvpDAEDNaEkLDvSkknIGBSqgYkiJxGEcfIDrDIUbjTufZupyBdOvfvrdbxokJMItnpCjgW": {
+    "aNZEnipJSIyzqTBJTLvEPfYDLwrxEebZBmVAAKtODIzwgCAmJZKwlXyYLceDvpDAEDNaEkLDvSkknIGBSqgYkiJxGEcfIDrDIUbjTufZupyBdOvfvrdbxokJMItnpCjgW": {
         "global_state": {
             "progress": "in_progress",
             "round_count": 0,
             "max_rounds": 200,
             "ended_reason": None,
             "game_type": "私聊角色类",
-            "outline": "Game Outline: \"The Mansion Guardian\"\n\nBackground Setting  \nSet on the windswept coast, \"The Mansion Guardian\" unfolds in an opulent seaside estate owned by Mrs. Lin, a refined and elegant woman whose husband commands a cruise ship fleet and is rarely at home. The mansion, adorned with luxurious decor and sprawling gardens, is both a sanctuary of peace and a potential target for envy and crime. Malik, a towering and disciplined security guard from Africa, has become the estate’s silent sentinel—a steadfast shadow ensuring Mrs. Lin’s safety and comfort during her husband’s long absences. As the nights deepen and the ocean’s whispers grow louder, the quiet intimacy and underlying tension between protector and protected become the emotional core of the story.\n\nMain Characters  \n- Mrs. Lin: The lady of the mansion. Intelligent, graceful, and quietly lonely, she relies on Malik for safety and companionship, finding in him a presence that is both reassuring and quietly magnetic.  \n- Malik: The exclusive security guard. Tall, muscular, and disciplined, Malik’s stoic exterior hides a gentle, loyal heart. He is vigilant, attentive to detail, and fiercely protective, treating Mrs. Lin with respect and warmth born from genuine gratitude and admiration.  \n- Occasional Minor Characters (off-screen or through calls/messages):  \n   - Mr. Lin: Mrs. Lin’s husband, a distant presence, mostly communicating via phone.  \n   - Delivery staff, neighbors, or authorities may appear briefly to drive events.\n\nCore Conflict / Objective  \nMalik’s central goal is to ensure Mrs. Lin’s absolute safety and comfort, no matter the cost. As subtle threats emerge—unexplained movements in the garden, strange phone calls, and the ever-present risk posed by the mansion’s isolation—Malik must balance his professional duties with the delicate, deepening bond he shares with Mrs. Lin. The emotional conflict intensifies as Malik’s loyalty and devotion are tested by external dangers and the growing sense of intimacy and unspoken affection between himself and Mrs. Lin.\n\nKey Scenes / Storyline Progression (Chapter Structure)\n\nChapter 1: The Quiet Night  \n- Introduces the daily routine: Malik’s evening patrol, Mrs. Lin’s post-bath solitude, and a gentle offer—a shawl against the chilly sea breeze.  \n- First hints of trust and subtle emotional connection.  \n- A sudden noise from the garden breaks the calm; Malik investigates, returns reassuring Mrs. Lin, and reinforces the sense of safety.\n\nChapter 2: Signs of Disturbance  \n- Malik notices subtle signs of intrusion—disturbed sand at the estate’s perimeter, a misplaced garden tool, a flickering security light.  \n- Mrs. Lin requests increased patrols; the relationship deepens through late-night tea sessions and shared stories.  \n- Malik shares fragments from his past in Africa, his love for drum rhythms, and his pride in his work.\n\nChapter 3: Shadows on the Shore  \n- An anonymous call warns of potential danger; Malik’s vigilance intensifies.  \n- A power outage plunges the mansion into darkness one stormy night. Malik must navigate the shadowy corridors, reassuring Mrs. Lin and securing the property.  \n- Emotional tension rises: Mrs. Lin confides in Malik about her fears and loneliness.\n\nChapter 4: The Test of Loyalty  \n- Suspicious figures appear near the estate on security cameras. Malik thwarts a potential break-in, showcasing his strength and strategic skills.  \n- In the aftermath, Malik tends to Mrs. Lin’s shaken nerves with gentle care, brewing her tea, and sharing quiet moments on the terrace.  \n- Mrs. Lin, grateful and moved, expresses her trust and affection more openly.\n\nChapter 5: The Unspoken Bond  \n- The physical threat recedes, but the emotional stakes reach their peak.  \n- Malik is offered a lucrative position elsewhere, forcing him to confront his dedication to Mrs. Lin.  \n- Mrs. Lin must decide whether to formally ask Malik to stay, risking gossip and societal scrutiny, or allow him to leave for his own good.\n\nChapter 6: Resolution and Farewell (or New Beginning)  \nMultiple possible endings, shaped by previous choices and interactions:  \n- Malik accepts the new job, departing with a heavy heart but leaving Mrs. Lin with renewed confidence and gratitude.  \n- Mrs. Lin asks Malik to stay, and together they forge a new chapter—either as devoted friends and confidants or with the possibility of a deeper, unspoken connection.  \n- An ambiguous ending where Malik remains, but the emotional truth lingers quietly, their bond stronger for all they’ve endured.\n\nPossible Endings  \n- Separation with mutual respect: Malik leaves, and Mrs. Lin honors his service, treasuring the safety and warmth he brought into her life.  \n- Eternal Guardian: Malik stays, embracing his role as Mrs. Lin’s lifelong protector, their relationship deepened by trust and unspoken affection.  \n- Unspoken Promise: The story ends with Malik silently watching over Mrs. Lin at sunset, the future open—defined by loyalty, gratitude, and the quiet hope for more.\n\nThematic Focus  \n- The interplay between duty and emotion  \n- The meaning of loyalty, trust, and companionship  \n- Subtle intimacy and the quiet strength of unspoken bonds  \n- The challenge of facing external and internal threats in isolation\n\nThis structure enables episodic progression, meaningful choices, and replayability, centered around the evolving relationship between Malik and Mrs. Lin—balancing tension, comfort, and the allure of unspoken feelings.",
+            "outline": "Game Title: Mansion Guardian\n\nI. Setting  \nA luxurious seaside mansion stands alone on the misty coast, surrounded by manicured gardens and imposing gates. The mansion’s lady, Mrs. Lin, lives here while her husband, a renowned cruise captain, is away at sea for most of the year. Only Malik, her devoted personal security guard from Africa, is her constant company. The nights are long, the sea wind carries secrets, and the vast halls echo with both opulence and loneliness. The mansion, a fortress of comfort, is also a stage for unseen threats and deep companionship.\n\nII. Main Characters  \n1. Mrs. Lin (Player Character)  \n   - Elegant and gentle, Mrs. Lin is independent yet quietly vulnerable when her husband is away. She manages the mansion’s affairs, values trust and respect, and treats Malik as both protector and confidant.  \n2. Malik  \n   - Height: 198cm, muscular build, dark bronze skin, short-cropped hair, piercing yet gentle eyes.  \n   - Personality: Reserved, strictly principled, observant, unwaveringly loyal to Mrs. Lin.  \n   - Skills: Expert in security, detail-oriented, physically fit, skilled in non-verbal communication, passionate about African drumming, fascinated by tea culture and sunsets.  \n   - Motivation: To protect Mrs. Lin at all costs, inspired by her trust and kindness, seeing her as family.  \n   - Dialogue: Deep, steady tone, succinct, respectful, sometimes peppered with African idioms, always exuding reliability.\n\nIII. Core Conflict / Objective  \nMrs. Lin must navigate the delicate balance between loneliness, subtle threats that emerge around the mansion, and her growing reliance on Malik’s protection and companionship. The story revolves around securing the mansion against mysterious incidents, uncovering hidden motives among staff or visitors, and evolving the emotional bond between mistress and guardian. Malik’s challenge is to anticipate danger—both physical and emotional—and ensure Mrs. Lin’s safety and happiness.\n\nIV. Key Chapters & Plot Points\n\nChapter 1: Night Watch  \n- Introduction to the mansion’s routines.  \n- Malik’s night patrols, checking windows, securing doors, reassuring Mrs. Lin after a minor scare (e.g., a window left open).  \n- First hint of unease: anonymous letters arrive, warning Mrs. Lin to “leave while she can.”  \n- Malik volunteers to increase patrols, his concern for Mrs. Lin’s well-being subtly deepening.\n\nChapter 2: Unfamiliar Shadows  \n- Minor disturbances: flickering lights, strange noises, a missing heirloom.  \n- Malik investigates, interviews staff, and notices new footprints near the guest villa.  \n- Mrs. Lin confides in Malik about her anxiety; Malik shares a story from his homeland to comfort her, initiating deeper trust.  \n- Tension rises as Malik finds evidence of tampering with the security system.\n\nChapter 3: The Storm Gathers  \n- A violent storm isolates the mansion; phone lines are cut, backup generators fail.  \n- Malik works tirelessly to restore order, patrolling by lantern light.  \n- A masked intruder is spotted on the security cameras. Malik must decide whether to confront or protect Mrs. Lin first.  \n- Emotional intimacy: Mrs. Lin helps dress Malik’s wounds after a confrontation, their bond intensifies.\n\nChapter 4: The Mask Unveiled  \n- Malik uncovers the intruder’s identity—a dismissed staff member seeking revenge.  \n- Mrs. Lin’s husband calls, unable to return due to the storm; she must rely solely on Malik.  \n- Malik’s loyalty is tested when the intruder threatens Mrs. Lin directly.  \n- Together, they set a trap, blending Malik’s tactical acumen and Mrs. Lin’s ingenuity.\n\nChapter 5: Dawn and Dusk  \n- The threat is neutralized. The police arrive as the storm clears.  \n- Mrs. Lin and Malik share a quiet moment on the terrace, watching the sunrise.  \n- Their relationship can evolve based on player choices: strictly professional, deep friendship, or a subtle, unspoken emotional attachment.\n\nV. Possible Endings\n\n1. Professional Loyalty  \nMrs. Lin and Malik maintain a respectful, professional relationship. Malik remains her trusted guardian, the mansion’s peace is restored, and trust deepens.\n\n2. Emotional Confidants  \nThrough mutual support and open-hearted conversations, Mrs. Lin and Malik become close friends, finding comfort and understanding in one another’s company.\n\n3. Subtle Intimacy  \nIf Mrs. Lin opens up and Malik reciprocates, their bond may hint at a deeper, unspoken affection. The game ends with a sense of hope and quiet promise, as Malik continues his watch—no longer just out of duty, but genuine care.\n\nVI. Replayability & Player Choices  \n- Players shape the relationship with Malik through dialogue and shared experiences.  \n- Branching scenes: exploring personal stories, sharing hobbies (tea, drumming, sunsets), or focusing strictly on security.  \n- Multiple outcomes depending on Mrs. Lin’s trust in Malik, her responses to danger, and the emotional openness she allows.\n\nVII. Key Themes  \n- The meaning of loyalty and trust  \n- The loneliness of luxury  \n- The subtle strength of companionship  \n- Facing danger, both external and internal\n\nThis outline provides the foundation for a rich, immersive narrative experience centered on protection, emotional connection, and the unique bond between guardian and mistress within the secluded world of a seaside mansion.",
             "script": {
-            "outline": {
-                "introduction": "Set on a windswept coastal estate, 'The Mansion Guardian' is a narrative-driven game where players experience the evolving relationship between Mrs. Lin, a refined yet lonely lady, and Malik, her steadfast security guard. As subtle threats emerge around the opulent mansion, the emotional tension and growing intimacy between protector and protected become the heart of the story.",
-                "info": "Genre: Narrative-driven story game. Style: Emotional, atmospheric, and character-focused. The game features episodic progression, meaningful choices, and multiple endings shaped by player decisions.",
-                "rules": "Players primarily control Malik, making choices that affect both the safety of the mansion and the emotional bond with Mrs. Lin. Dialogue options, investigation sequences, and relationship-building moments determine the story's direction and ultimate outcome. Each chapter presents new challenges and opportunities for connection."
-            },
-            "background": {
-                "relationships": [
-                {
-                    "character1": "Mrs. Lin",
-                    "character2": "Malik",
-                    "relationship": "Employer and security guard; a relationship marked by growing trust, subtle affection, and emotional dependence."
+                "outline": {
+                    "introduction": "Mansion Guardian is an immersive narrative experience set in a luxurious seaside mansion shrouded in mist and secrets. As Mrs. Lin, the player navigates the delicate balance between isolation, subtle threats, and the evolving bond with her devoted guardian, Malik. The story unfolds through personal interactions, emotional choices, and the quiet strength of companionship.",
+                    "info": "Game Type: Character Companion (Private Chat Roleplay). Style: Emotional, atmospheric, and character-driven. Focus: Deep conversations, trust-building, and exploring the nuances of loyalty and protection.",
+                    "rules": "Players interact with Malik through dialogue choices, shaping the relationship and uncovering layers of his personality and backstory. There are no traditional chapters or combat; instead, the game centers on meaningful conversations, emotional support, and shared moments. Player decisions influence the depth and direction of the bond with Malik, leading to multiple possible outcomes."
                 },
-                {
-                    "character1": "Mrs. Lin",
-                    "character2": "Mr. Lin",
-                    "relationship": "Married couple; Mr. Lin is often absent, maintaining a distant presence through calls."
+                "background": {
+                    "relationships": []
                 },
-                {
-                    "character1": "Malik",
-                    "character2": "Mr. Lin",
-                    "relationship": "Employee and employer; Malik is entrusted with Mrs. Lin's safety during Mr. Lin's frequent absences."
-                }
+                "chapters": [],
+                "characters": [
+                    {
+                        "name": "Malik",
+                        "gender": "Male",
+                        "profile": "Malik stands at 198cm with a muscular build, dark bronze skin, and short-cropped hair. His piercing yet gentle eyes reflect both vigilance and warmth. Reserved and strictly principled, Malik is unwaveringly loyal to Mrs. Lin, whom he protects with both skill and heart. He is an expert in security, detail-oriented, and physically fit. Malik communicates efficiently, often using non-verbal cues, and his deep, steady voice is laced with African idioms. Outside his duties, he finds solace in African drumming, is fascinated by tea culture, and cherishes sunsets over the sea. Inspired by Mrs. Lin’s trust and kindness, he sees her as family and is motivated to ensure her safety and happiness above all else.",
+                        "introduction": "Malik is Mrs. Lin’s devoted personal security guard, originally from Africa. His presence is both reassuring and formidable, blending professional vigilance with genuine care. Though reserved, Malik’s loyalty runs deep, and his quiet strength becomes a pillar for Mrs. Lin as she faces both external threats and the loneliness of her opulent world. Through conversation and shared experiences, Malik reveals layers of wisdom, empathy, and a passion for life’s simple pleasures."
+                    }
                 ]
             },
-            "chapters": [
-                {
-                "number": 1,
-                "introduction": "The Quiet Night: Malik's evening patrol and Mrs. Lin's solitary routine are interrupted by a mysterious noise in the garden, sparking the first hints of trust and connection."
-                },
-                {
-                "number": 2,
-                "introduction": "Signs of Disturbance: Malik discovers subtle signs of intrusion. Mrs. Lin requests more security, leading to late-night conversations and deeper understanding between them."
-                },
-                {
-                "number": 3,
-                "introduction": "Shadows on the Shore: An anonymous warning and a sudden blackout force Malik to protect Mrs. Lin through a tense, stormy night, drawing them emotionally closer."
-                },
-                {
-                "number": 4,
-                "introduction": "The Test of Loyalty: Suspicious figures appear near the estate. Malik thwarts a break-in, and Mrs. Lin openly expresses her gratitude and growing affection."
-                },
-                {
-                "number": 5,
-                "introduction": "The Unspoken Bond: With the threat diminished, Malik faces a tempting job offer elsewhere. Mrs. Lin must decide whether to ask him to stay, risking gossip and her own vulnerability."
-                },
-                {
-                "number": 6,
-                "introduction": "Resolution and Farewell (or New Beginning): Multiple endings unfold based on previous choices—Malik may leave, stay as a loyal guardian, or remain with an unspoken promise, their bond forever changed."
-                }
-            ],
-            "characters": [
-                {
-                "name": "Mrs. Lin",
-                "gender": "Female",
-                "profile": "A graceful, intelligent woman in her early forties, Mrs. Lin is the lady of the mansion. She is elegant and composed, yet quietly lonely due to her husband's frequent absences. She finds comfort and reassurance in Malik's presence, gradually opening up to him as trust and affection grow.",
-                "introduction": "The refined owner of the seaside estate, Mrs. Lin is both vulnerable and strong, seeking safety and companionship in the isolation of her luxurious home."
-                },
-                {
-                "name": "Malik",
-                "gender": "Male",
-                "profile": "A tall, muscular security guard from Africa, Malik is disciplined, vigilant, and deeply loyal. His stoic exterior conceals a gentle heart and a profound sense of gratitude toward Mrs. Lin. He is attentive to detail, protective, and quietly magnetic, forming a deep emotional bond with his employer.",
-                "introduction": "The mansion's silent sentinel, Malik is dedicated to Mrs. Lin's safety and comfort, navigating both external threats and the complexities of their growing relationship."
-                },
-                {
-                "name": "Mr. Lin",
-                "gender": "Male",
-                "profile": "A successful businessman who commands a fleet of cruise ships, Mr. Lin is often away from home. He maintains a distant presence in Mrs. Lin's life, communicating mainly through phone calls.",
-                "introduction": "Mrs. Lin's husband, whose frequent absences leave her in the care of Malik and contribute to the emotional distance within the household."
-                }
-            ]
-            },
             "assets": {
-            "world_rules": "Players take on the role of Malik, the security guard of a coastal mansion. Choices made throughout the game influence both the safety of the estate and the evolving relationship with Mrs. Lin. Dialogue options, investigation sequences, and moments of emotional connection shape the narrative and lead to multiple possible endings.",
-            "background_setting": "The story unfolds in a windswept coastal estate, where the opulent mansion stands isolated against the elements. Mrs. Lin, the lady of the house, lives in quiet solitude due to her husband's frequent absences. Malik, her steadfast security guard, is entrusted with her safety and becomes her confidant as subtle threats emerge.",
-            "characters": [
-                {
-                "name": "Mrs. Lin",
-                "gender": "Female",
-                "profile": "A graceful, intelligent woman in her early forties, Mrs. Lin is elegant and composed, yet quietly lonely. She finds comfort and reassurance in Malik's presence, gradually opening up to him as trust and affection grow.",
-                "introduction": "The refined owner of the seaside estate, Mrs. Lin is both vulnerable and strong, seeking safety and companionship in the isolation of her luxurious home."
+                "world_rules": "The game takes place in a luxurious seaside mansion enveloped in mist and secrets. Players interact with Malik, the devoted guardian, through dialogue choices. There are no traditional chapters or combat; the focus is on meaningful conversations, emotional support, and shared moments. Player decisions influence the depth and direction of the bond with Malik, leading to multiple possible outcomes.",
+                "background_setting": "Mrs. Lin lives in isolation within a grand mansion by the sea. The atmosphere is emotional and atmospheric, with subtle threats lurking and the evolving bond between Mrs. Lin and Malik at the center.",
+                "character_info": {
+                    "Malik": {
+                        "name": "Malik",
+                        "gender": "Male",
+                        "appearance": "198cm tall, muscular build, dark bronze skin, short-cropped hair, piercing yet gentle eyes.",
+                        "personality": "Reserved, strictly principled, unwaveringly loyal, detail-oriented, physically fit.",
+                        "skills": "Expert in security, communicates efficiently, uses non-verbal cues, deep steady voice with African idioms.",
+                        "interests": "African drumming, tea culture, sunsets over the sea.",
+                        "motivation": "Inspired by Mrs. Lin’s trust and kindness, sees her as family, motivated to ensure her safety and happiness."
+                    }
                 },
-                {
-                "name": "Malik",
-                "gender": "Male",
-                "profile": "A tall, muscular security guard from Africa, Malik is disciplined, vigilant, and deeply loyal. His stoic exterior conceals a gentle heart and a profound sense of gratitude toward Mrs. Lin. He is attentive to detail, protective, and quietly magnetic, forming a deep emotional bond with his employer.",
-                "introduction": "The mansion's silent sentinel, Malik is dedicated to Mrs. Lin's safety and comfort, navigating both external threats and the complexities of their growing relationship."
-                },
-                {
-                "name": "Mr. Lin",
-                "gender": "Male",
-                "profile": "A successful businessman who commands a fleet of cruise ships, Mr. Lin is often away from home. He maintains a distant presence in Mrs. Lin's life, communicating mainly through phone calls.",
-                "introduction": "Mrs. Lin's husband, whose frequent absences leave her in the care of Malik and contribute to the emotional distance within the household."
-                }
-            ],
-            "relationship_info": [
-                {
-                "character1": "Mrs. Lin",
-                "character2": "Malik",
-                "relationship": "Employer and security guard; a relationship marked by growing trust, subtle affection, and emotional dependence."
-                },
-                {
-                "character1": "Mrs. Lin",
-                "character2": "Mr. Lin",
-                "relationship": "Married couple; Mr. Lin is often absent, maintaining a distant presence through calls."
-                },
-                {
-                "character1": "Malik",
-                "character2": "Mr. Lin",
-                "relationship": "Employee and employer; Malik is entrusted with Mrs. Lin's safety during Mr. Lin's frequent absences."
-                }
-            ],
-            "game_genre": "story"
+                "companion_route_rules": "The game centers on building trust and emotional connection with Malik. Affection increases through meaningful conversations and shared experiences. When affection reaches 100, the game ends with a perfect ending.",
+                "game_genre": "mixed"
             },
             "story_state": {
-            "player": {
-                "hp": 100,
-                "max_hp": 100,
-                "level": 1,
-                "status": "alert",
-                "name": "Malik"
-            },
-            "npc": {
-                "name": "Mrs. Lin",
-                "affection": 20,
-                "relationship": "employer"
-            },
-            "world": {
-                "scene": "coastal mansion",
-                "time": "evening",
-                "location": "main hall"
-            }
+                "player": {
+                    "level": 1,
+                    "status": "calm",
+                    "name": "Mrs. Lin"
+                },
+                "npc": {
+                    "name": "Malik",
+                    "affection": 20,
+                    "relationship": "guardian"
+                },
+                "world": {
+                    "scene": "seaside mansion foyer",
+                    "time": "early evening",
+                    "location": "seaside mansion"
+                }
             },
             "direction": "",
             "language_code": "en",
@@ -747,107 +543,54 @@ PRESET_GAME_SNAPSHOTS = {
         "max_rounds": 200,
         "messages": [
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "📝 我已根据你的输入生成了以下剧情大纲：\n\nGame Outline: \"The Mansion Guardian\"\n\nBackground Setting  \nSet on the windswept coast, \"The Mansion Guardian\" unfolds in an opulent seaside estate owned by Mrs. Lin, a refined and elegant woman whose husband commands a cruise ship fleet and is rarely at home. The mansion, adorned with luxurious decor and sprawling gardens, is both a sanctuary of peace and a potential target for envy and crime. Malik, a towering and disciplined security guard from Africa, has become the estate’s silent sentinel—a steadfast shadow ensuring Mrs. Lin’s safety and comfort during her husband’s long absences. As the nights deepen and the ocean’s whispers grow louder, the quiet intimacy and underlying tension between protector and protected become the emotional core of the story.\n\nMain Characters  \n- Mrs. Lin: The lady of the mansion. Intelligent, graceful, and quietly lonely, she relies on Malik for safety and companionship, finding in him a presence that is both reassuring and quietly magnetic.  \n- Malik: The exclusive security guard. Tall, muscular, and disciplined, Malik’s stoic exterior hides a gentle, loyal heart. He is vigilant, attentive to detail, and fiercely protective, treating Mrs. Lin with respect and warmth born from genuine gratitude and admiration.  \n- Occasional Minor Characters (off-screen or through calls/messages):  \n   - Mr. Lin: Mrs. Lin’s husband, a distant presence, mostly communicating via phone.  \n   - Delivery staff, neighbors, or authorities may appear briefly to drive events.\n\nCore Conflict / Objective  \nMalik’s central goal is to ensure Mrs. Lin’s absolute safety and comfort, no matter the cost. As subtle threats emerge—unexplained movements in the garden, strange phone calls, and the ever-present risk posed by the mansion’s isolation—Malik must balance his professional duties with the delicate, deepening bond he shares with Mrs. Lin. The emotional conflict intensifies as Malik’s loyalty and devotion are tested by external dangers and the growing sense of intimacy and unspoken affection between himself and Mrs. Lin.\n\nKey Scenes / Storyline Progression (Chapter Structure)\n\nChapter 1: The Quiet Night  \n- Introduces the daily routine: Malik’s evening patrol, Mrs. Lin’s post-bath solitude, and a gentle offer—a shawl against the chilly sea breeze.  \n- First hints of trust and subtle emotional connection.  \n- A sudden noise from the garden breaks the calm; Malik investigates, returns reassuring Mrs. Lin, and reinforces the sense of safety.\n\nChapter 2: Signs of Disturbance  \n- Malik notices subtle signs of intrusion—disturbed sand at the estate’s perimeter, a misplaced garden tool, a flickering security light.  \n- Mrs. Lin requests increased patrols; the relationship deepens through late-night tea sessions and shared stories.  \n- Malik shares fragments from his past in Africa, his love for drum rhythms, and his pride in his work.\n\nChapter 3: Shadows on the Shore  \n- An anonymous call warns of potential danger; Malik’s vigilance intensifies.  \n- A power outage plunges the mansion into darkness one stormy night. Malik must navigate the shadowy corridors, reassuring Mrs. Lin and securing the property.  \n- Emotional tension rises: Mrs. Lin confides in Malik about her fears and loneliness.\n\nChapter 4: The Test of Loyalty  \n- Suspicious figures appear near the estate on security cameras. Malik thwarts a potential break-in, showcasing his strength and strategic skills.  \n- In the aftermath, Malik tends to Mrs. Lin’s shaken nerves with gentle care, brewing her tea, and sharing quiet moments on the terrace.  \n- Mrs. Lin, grateful and moved, expresses her trust and affection more openly.\n\nChapter 5: The Unspoken Bond  \n- The physical threat recedes, but the emotional stakes reach their peak.  \n- Malik is offered a lucrative position elsewhere, forcing him to confront his dedication to Mrs. Lin.  \n- Mrs. Lin must decide whether to formally ask Malik to stay, risking gossip and societal scrutiny, or allow him to leave for his own good.\n\nChapter 6: Resolution and Farewell (or New Beginning)  \nMultiple possible endings, shaped by previous choices and interactions:  \n- Malik accepts the new job, departing with a heavy heart but leaving Mrs. Lin with renewed confidence and gratitude.  \n- Mrs. Lin asks Malik to stay, and together they forge a new chapter—either as devoted friends and confidants or with the possibility of a deeper, unspoken connection.  \n- An ambiguous ending where Malik remains, but the emotional truth lingers quietly, their bond stronger for all they’ve endured.\n\nPossible Endings  \n- Separation with mutual respect: Malik leaves, and Mrs. Lin honors his service, treasuring the safety and warmth he brought into her life.  \n- Eternal Guardian: Malik stays, embracing his role as Mrs. Lin’s lifelong protector, their relationship deepened by trust and unspoken affection.  \n- Unspoken Promise: The story ends with Malik silently watching over Mrs. Lin at sunset, the future open—defined by loyalty, gratitude, and the quiet hope for more.\n\nThematic Focus  \n- The interplay between duty and emotion  \n- The meaning of loyalty, trust, and companionship  \n- Subtle intimacy and the quiet strength of unspoken bonds  \n- The challenge of facing external and internal threats in isolation\n\nThis structure enables episodic progression, meaningful choices, and replayability, centered around the evolving relationship between Malik and Mrs. Lin—balancing tension, comfort, and the allure of unspoken feelings.\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
-            "is_system": False
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "📝 我已根据你的输入生成了以下剧情大纲：\n\nGame Title: Mansion Guardian\n\nI. Setting  \nA luxurious seaside mansion stands alone on the misty coast, surrounded by manicured gardens and imposing gates. The mansion’s lady, Mrs. Lin, lives here while her husband, a renowned cruise captain, is away at sea for most of the year. Only Malik, her devoted personal security guard from Africa, is her constant company. The nights are long, the sea wind carries secrets, and the vast halls echo with both opulence and loneliness. The mansion, a fortress of comfort, is also a stage for unseen threats and deep companionship.\n\nII. Main Characters  \n1. Mrs. Lin (Player Character)  \n   - Elegant and gentle, Mrs. Lin is independent yet quietly vulnerable when her husband is away. She manages the mansion’s affairs, values trust and respect, and treats Malik as both protector and confidant.  \n2. Malik  \n   - Height: 198cm, muscular build, dark bronze skin, short-cropped hair, piercing yet gentle eyes.  \n   - Personality: Reserved, strictly principled, observant, unwaveringly loyal to Mrs. Lin.  \n   - Skills: Expert in security, detail-oriented, physically fit, skilled in non-verbal communication, passionate about African drumming, fascinated by tea culture and sunsets.  \n   - Motivation: To protect Mrs. Lin at all costs, inspired by her trust and kindness, seeing her as family.  \n   - Dialogue: Deep, steady tone, succinct, respectful, sometimes peppered with African idioms, always exuding reliability.\n\nIII. Core Conflict / Objective  \nMrs. Lin must navigate the delicate balance between loneliness, subtle threats that emerge around the mansion, and her growing reliance on Malik’s protection and companionship. The story revolves around securing the mansion against mysterious incidents, uncovering hidden motives among staff or visitors, and evolving the emotional bond between mistress and guardian. Malik’s challenge is to anticipate danger—both physical and emotional—and ensure Mrs. Lin’s safety and happiness.\n\nIV. Key Chapters & Plot Points\n\nChapter 1: Night Watch  \n- Introduction to the mansion’s routines.  \n- Malik’s night patrols, checking windows, securing doors, reassuring Mrs. Lin after a minor scare (e.g., a window left open).  \n- First hint of unease: anonymous letters arrive, warning Mrs. Lin to “leave while she can.”  \n- Malik volunteers to increase patrols, his concern for Mrs. Lin’s well-being subtly deepening.\n\nChapter 2: Unfamiliar Shadows  \n- Minor disturbances: flickering lights, strange noises, a missing heirloom.  \n- Malik investigates, interviews staff, and notices new footprints near the guest villa.  \n- Mrs. Lin confides in Malik about her anxiety; Malik shares a story from his homeland to comfort her, initiating deeper trust.  \n- Tension rises as Malik finds evidence of tampering with the security system.\n\nChapter 3: The Storm Gathers  \n- A violent storm isolates the mansion; phone lines are cut, backup generators fail.  \n- Malik works tirelessly to restore order, patrolling by lantern light.  \n- A masked intruder is spotted on the security cameras. Malik must decide whether to confront or protect Mrs. Lin first.  \n- Emotional intimacy: Mrs. Lin helps dress Malik’s wounds after a confrontation, their bond intensifies.\n\nChapter 4: The Mask Unveiled  \n- Malik uncovers the intruder’s identity—a dismissed staff member seeking revenge.  \n- Mrs. Lin’s husband calls, unable to return due to the storm; she must rely solely on Malik.  \n- Malik’s loyalty is tested when the intruder threatens Mrs. Lin directly.  \n- Together, they set a trap, blending Malik’s tactical acumen and Mrs. Lin’s ingenuity.\n\nChapter 5: Dawn and Dusk  \n- The threat is neutralized. The police arrive as the storm clears.  \n- Mrs. Lin and Malik share a quiet moment on the terrace, watching the sunrise.  \n- Their relationship can evolve based on player choices: strictly professional, deep friendship, or a subtle, unspoken emotional attachment.\n\nV. Possible Endings\n\n1. Professional Loyalty  \nMrs. Lin and Malik maintain a respectful, professional relationship. Malik remains her trusted guardian, the mansion’s peace is restored, and trust deepens.\n\n2. Emotional Confidants  \nThrough mutual support and open-hearted conversations, Mrs. Lin and Malik become close friends, finding comfort and understanding in one another’s company.\n\n3. Subtle Intimacy  \nIf Mrs. Lin opens up and Malik reciprocates, their bond may hint at a deeper, unspoken affection. The game ends with a sense of hope and quiet promise, as Malik continues his watch—no longer just out of duty, but genuine care.\n\nVI. Replayability & Player Choices  \n- Players shape the relationship with Malik through dialogue and shared experiences.  \n- Branching scenes: exploring personal stories, sharing hobbies (tea, drumming, sunsets), or focusing strictly on security.  \n- Multiple outcomes depending on Mrs. Lin’s trust in Malik, her responses to danger, and the emotional openness she allows.\n\nVII. Key Themes  \n- The meaning of loyalty and trust  \n- The loneliness of luxury  \n- The subtle strength of companionship  \n- Facing danger, both external and internal\n\nThis outline provides the foundation for a rich, immersive narrative experience centered on protection, emotional connection, and the unique bond between guardian and mistress within the secluded world of a seaside mansion.\n\n你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，或者发送修改后的大纲内容来替换它。",
+                "is_system": False
             },
             {
-            "role": "player",
-            "player_name": "系统",
-            "content": "确认",
-            "is_system": False
+                "role": "player",
+                "player_name": "系统",
+                "content": "确认",
+                "is_system": False
             },
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "✅ Confirmed, generating game script...",
-            "is_system": True
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "✅ Confirmed, generating game script...",
+                "is_system": True
             },
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "You are Malik, the vigilant security guard of a windswept coastal mansion. As subtle threats begin to emerge, your choices will shape both the safety of the estate and your evolving relationship with Mrs. Lin, the refined yet lonely lady of the house. Every decision matters—will you become her trusted protector, or will distance remain between you?",
-            "is_system": True
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "You are Mrs. Lin, living in a grand seaside mansion shrouded in mist and secrets. Your devoted guardian, Malik, stands by your side, offering both protection and companionship. Through heartfelt conversations and shared moments, you will uncover Malik’s layers and shape the bond between you. Your choices will determine the depth of trust and connection you build.",
+                "is_system": True
             },
             {
-            "role": "ai",
-            "player_name": "主持人",
-            "content": "The evening is quiet as you patrol the main hall. Mrs. Lin sits alone, gazing out at the stormy sea. Suddenly, a mysterious noise echoes from the garden. What will you do?",
-            "is_system": False
+                "role": "ai",
+                "player_name": "主持人",
+                "content": "The mansion is quiet as the sun sets over the sea. Malik stands nearby, his vigilant gaze softened by the golden light. He awaits your words, ready to listen or share a moment of calm. What will you say to him?",
+                "is_system": False
             }
         ],
         "game_type": "私聊角色类",
         "script": {
             "outline": {
-            "introduction": "Set on a windswept coastal estate, 'The Mansion Guardian' is a narrative-driven game where players experience the evolving relationship between Mrs. Lin, a refined yet lonely lady, and Malik, her steadfast security guard. As subtle threats emerge around the opulent mansion, the emotional tension and growing intimacy between protector and protected become the heart of the story.",
-            "info": "Genre: Narrative-driven story game. Style: Emotional, atmospheric, and character-focused. The game features episodic progression, meaningful choices, and multiple endings shaped by player decisions.",
-            "rules": "Players primarily control Malik, making choices that affect both the safety of the mansion and the emotional bond with Mrs. Lin. Dialogue options, investigation sequences, and relationship-building moments determine the story's direction and ultimate outcome. Each chapter presents new challenges and opportunities for connection."
+                "introduction": "Mansion Guardian is an immersive narrative experience set in a luxurious seaside mansion shrouded in mist and secrets. As Mrs. Lin, the player navigates the delicate balance between isolation, subtle threats, and the evolving bond with her devoted guardian, Malik. The story unfolds through personal interactions, emotional choices, and the quiet strength of companionship.",
+                "info": "Game Type: Character Companion (Private Chat Roleplay). Style: Emotional, atmospheric, and character-driven. Focus: Deep conversations, trust-building, and exploring the nuances of loyalty and protection.",
+                "rules": "Players interact with Malik through dialogue choices, shaping the relationship and uncovering layers of his personality and backstory. There are no traditional chapters or combat; instead, the game centers on meaningful conversations, emotional support, and shared moments. Player decisions influence the depth and direction of the bond with Malik, leading to multiple possible outcomes."
             },
             "background": {
-            "relationships": [
-                {
-                "character1": "Mrs. Lin",
-                "character2": "Malik",
-                "relationship": "Employer and security guard; a relationship marked by growing trust, subtle affection, and emotional dependence."
-                },
-                {
-                "character1": "Mrs. Lin",
-                "character2": "Mr. Lin",
-                "relationship": "Married couple; Mr. Lin is often absent, maintaining a distant presence through calls."
-                },
-                {
-                "character1": "Malik",
-                "character2": "Mr. Lin",
-                "relationship": "Employee and employer; Malik is entrusted with Mrs. Lin's safety during Mr. Lin's frequent absences."
-                }
-            ]
+                "relationships": []
             },
-            "chapters": [
-            {
-                "number": 1,
-                "introduction": "The Quiet Night: Malik's evening patrol and Mrs. Lin's solitary routine are interrupted by a mysterious noise in the garden, sparking the first hints of trust and connection."
-            },
-            {
-                "number": 2,
-                "introduction": "Signs of Disturbance: Malik discovers subtle signs of intrusion. Mrs. Lin requests more security, leading to late-night conversations and deeper understanding between them."
-            },
-            {
-                "number": 3,
-                "introduction": "Shadows on the Shore: An anonymous warning and a sudden blackout force Malik to protect Mrs. Lin through a tense, stormy night, drawing them emotionally closer."
-            },
-            {
-                "number": 4,
-                "introduction": "The Test of Loyalty: Suspicious figures appear near the estate. Malik thwarts a break-in, and Mrs. Lin openly expresses her gratitude and growing affection."
-            },
-            {
-                "number": 5,
-                "introduction": "The Unspoken Bond: With the threat diminished, Malik faces a tempting job offer elsewhere. Mrs. Lin must decide whether to ask him to stay, risking gossip and her own vulnerability."
-            },
-            {
-                "number": 6,
-                "introduction": "Resolution and Farewell (or New Beginning): Multiple endings unfold based on previous choices—Malik may leave, stay as a loyal guardian, or remain with an unspoken promise, their bond forever changed."
-            }
-            ],
+            "chapters": [],
             "characters": [
-            {
-                "name": "Mrs. Lin",
-                "gender": "Female",
-                "profile": "A graceful, intelligent woman in her early forties, Mrs. Lin is the lady of the mansion. She is elegant and composed, yet quietly lonely due to her husband's frequent absences. She finds comfort and reassurance in Malik's presence, gradually opening up to him as trust and affection grow.",
-                "introduction": "The refined owner of the seaside estate, Mrs. Lin is both vulnerable and strong, seeking safety and companionship in the isolation of her luxurious home."
-            },
-            {
-                "name": "Malik",
-                "gender": "Male",
-                "profile": "A tall, muscular security guard from Africa, Malik is disciplined, vigilant, and deeply loyal. His stoic exterior conceals a gentle heart and a profound sense of gratitude toward Mrs. Lin. He is attentive to detail, protective, and quietly magnetic, forming a deep emotional bond with his employer.",
-                "introduction": "The mansion's silent sentinel, Malik is dedicated to Mrs. Lin's safety and comfort, navigating both external threats and the complexities of their growing relationship."
-            },
-            {
-                "name": "Mr. Lin",
-                "gender": "Male",
-                "profile": "A successful businessman who commands a fleet of cruise ships, Mr. Lin is often away from home. He maintains a distant presence in Mrs. Lin's life, communicating mainly through phone calls.",
-                "introduction": "Mrs. Lin's husband, whose frequent absences leave her in the care of Malik and contribute to the emotional distance within the household."
-            }
+                {
+                    "name": "Malik",
+                    "gender": "Male",
+                    "profile": "Malik stands at 198cm with a muscular build, dark bronze skin, and short-cropped hair. His piercing yet gentle eyes reflect both vigilance and warmth. Reserved and strictly principled, Malik is unwaveringly loyal to Mrs. Lin, whom he protects with both skill and heart. He is an expert in security, detail-oriented, and physically fit. Malik communicates efficiently, often using non-verbal cues, and his deep, steady voice is laced with African idioms. Outside his duties, he finds solace in African drumming, is fascinated by tea culture, and cherishes sunsets over the sea. Inspired by Mrs. Lin’s trust and kindness, he sees her as family and is motivated to ensure her safety and happiness above all else.",
+                    "introduction": "Malik is Mrs. Lin’s devoted personal security guard, originally from Africa. His presence is both reassuring and formidable, blending professional vigilance with genuine care. Though reserved, Malik’s loyalty runs deep, and his quiet strength becomes a pillar for Mrs. Lin as she faces both external threats and the loneliness of her opulent world. Through conversation and shared experiences, Malik reveals layers of wisdom, empathy, and a passion for life’s simple pleasures."
+                }
             ]
         },
         "transition": "",

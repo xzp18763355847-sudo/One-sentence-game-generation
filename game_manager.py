@@ -1018,9 +1018,10 @@ class GameManager:
                 # 确认后先生成剧本，再构建世界
                 script = await self._generate_script(final_outline, gs.game_type, gs.language_code)
                 gs.script = script
-
+                
                 # 构建世界
                 built = await self._build_world(script, gs.game_type, gs.language_code)
+                
 
                 gs.assets = built.get("assets", {}) or {}
                 gs.story_state = built.get("initial_state", {}) or {}
@@ -1031,6 +1032,8 @@ class GameManager:
                 gs.chapter_goal_completed = False
                 _genre = gs.assets.get("game_genre", "story")
                 self.game.narrative_state = init_narrative_state(genre=_genre)
+                
+               
 
                 intro = (built.get("player_facing_introduction") or "").strip()
                 first = (built.get("first_scene_prompt") or "").strip()

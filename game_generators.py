@@ -274,16 +274,19 @@ SCRIPT_GENERATOR_SYSTEM_PROMPT = """
 
 【重要规则】
 1. 根据游戏类型调整输出结构：
-   - 角色陪伴类：重点生成角色信息，章节可以为空或只有一个
+   - 角色陪伴类（私聊角色类）：重点生成角色信息，章节必须为空数组 []，relationships 也必须为空数组 []
    - 剧情游戏类：必须生成多个章节（至少3-5个），章节编号从1开始
    - 有结局的游戏：章节列表必须包含明确的结局章节
    - 无结局的游戏：章节列表可以为空或只有一个开放式章节
 
-2. 人物关系数组：列出主要角色之间的关系，格式为对象数组
+2. 人物关系数组（relationships）：
+   - 对于私聊角色类游戏：必须为空数组 []
+   - 对于其他游戏类型：列出主要角色之间的关系，格式为对象数组
 
 3. 角色数组：列出所有主要角色，包括玩家角色（如果有）
 
-4. 章节数组：
+4. 章节数组（chapters）：
+   - 对于私聊角色类游戏：必须为空数组 []
    - 有章节的游戏：必须包含多个章节，每个章节有编号和介绍
    - 无章节的游戏：可以为空数组或只有一个开放式章节
 
@@ -310,6 +313,13 @@ def build_script_prompt(outline: str, game_type: str, language_code: str = "cn")
     has_ending = game_info.get("has_ending", True)
     has_chapters = game_info.get("has_chapters", False)
     
+    # 检查是否为私聊角色类游戏
+    is_private_chat = (
+        game_type == "私聊角色类" or 
+        game_type == GameType.COMPANION_ROUTE.value or 
+        game_type == GameType.COMPANION_OPEN.value
+    )
+    
     language_map = {
         "cn": "中文",
         "en": "English",
@@ -325,7 +335,18 @@ def build_script_prompt(outline: str, game_type: str, language_code: str = "cn")
 是否有结局：{'是' if has_ending else '否'}
 是否有章节：{'是' if has_chapters else '否'}
 输出语言：{language_name}（language_code: {language_code}）
-
+"""
+    
+    if is_private_chat:
+        prompt += f"""
+【特别重要】这是私聊角色类游戏，请严格遵守以下规则：
+1. relationships（人物关系数组）必须为空数组 []
+2. chapters（章节数组）必须为空数组 []
+3. 只生成一个NPC角色（从角色列表中选择最重要的一个）
+4. 重点生成角色信息，确保角色设定详细完整
+"""
+    
+    prompt += f"""
 【重要】请使用 {language_name} 生成游戏剧本。JSON 中的所有文本内容（包括 introduction、info、rules、关系描述、角色介绍、章节介绍等）都必须使用 {language_name}。只输出 JSON。
 """
     return prompt.strip()
