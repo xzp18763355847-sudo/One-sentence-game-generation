@@ -76,7 +76,7 @@ async def start_official_game(
     gm: Any = Depends(get_game_manager),
 ) -> Any:
     """开始官方游戏（与根目录 app.py 一致：支持预设游戏、language_code 固定 en）."""
-    logger.info("POST /api/start_offcial_game 入参: %s", req)
+    logger.info(f"POST /api/start_offcial_game 入参: {req}")
     
     gid = (req.group_id or "").strip() or DEFAULT_GROUP_ID
     game_id = (req.game_id or "").strip()
@@ -143,7 +143,7 @@ async def send_message_sse(
     gm: Any = Depends(get_game_manager),
 ) -> StreamingResponse:
     """发送玩家消息，SSE 流式返回 3 条 event: reply."""
-    logger.info("POST /api/message_sse 入参: %s", req)
+    logger.info(f"POST /api/message_sse 入参: {req}")
     gid = (req.group_id or "").strip() or DEFAULT_GROUP_ID
     text = (req.text or "").strip()
     player_name = (req.player_name or "").strip() or "玩家"
