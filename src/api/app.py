@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from game_manager import GameManager
-from log_config import get_logger
+from utils.log_config import get_logger
 
 from config import HOST, PORT
 from src.api.endpoints.game_manage.router import router as game_router

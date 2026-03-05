@@ -20,7 +20,7 @@ from src.api.endpoints.game_manage.schemas import (
 from game_manager import Game
 from game_statics.preset_games import PRESET_GAME_SNAPSHOTS
 from game_types import is_valid_game_type
-from log_config import get_logger
+from utils.log_config import get_logger
 from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
 
 from config import DEFAULT_GROUP_ID

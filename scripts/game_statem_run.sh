@@ -14,3 +14,4 @@ fi
 echo "项目根目录: $PROJECT_ROOT"
 echo "启动服务: uv run python app.py"
 uv run python app.py
+# uv run python src/api/app.py
