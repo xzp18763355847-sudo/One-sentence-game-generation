@@ -13,6 +13,7 @@ from src.api.endpoints.game_manage.schemas import (
     MessageRequest,
     StartGameRequest,
     StartOfficialGameRequest,
+    SendMessageSseRequest,
 )
 
 # 项目根模块（需从项目根目录运行 uvicorn）
@@ -139,7 +140,7 @@ async def send_message(
 
 @router.post("/message_sse")
 async def send_message_sse(
-    req: MessageRequest,
+    req: SendMessageSseRequest,
     gm: Any = Depends(get_game_manager),
 ) -> StreamingResponse:
     """发送玩家消息，SSE 流式返回 3 条 event: reply."""
@@ -147,7 +148,8 @@ async def send_message_sse(
     gid = (req.group_id or "").strip() or DEFAULT_GROUP_ID
     text = (req.text or "").strip()
     player_name = (req.player_name or "").strip() or "玩家"
-    language_code = (req.language_code or "en").strip()
+    custom_variables = req.custom_variables or {}
+    language_code = custom_variables.get("language_code", "en")
 
     result = await asyncio.to_thread(
         gm.send_message,

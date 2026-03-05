@@ -29,6 +29,12 @@ class MessageRequest(BaseModel):
     player_name: str = "玩家"
     language_code: str = "en"
 
+class SendMessageSseRequest(BaseModel):
+    group_id: str = Optional[str] = None
+    text: str
+    player_name: str = "玩家"
+    custom_variables: Optional[dict] = {}  # 扩展字段 
+
 
 class EndGameRequest(BaseModel):
     """结束游戏请求."""

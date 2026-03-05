@@ -63,6 +63,12 @@ class SendMessageRequest(BaseModel):
     player_name: str = "玩家"
     language_code: str = "en"
 
+class SendMessageSseRequest(BaseModel):
+    group_id: str = DEFAULT_GROUP_ID
+    text: str
+    player_name: str = "玩家"
+    custom_variables: Optional[dict] = {}  # 扩展字段 
+
 
 class EndGameRequest(BaseModel):
     group_id: Optional[str] = DEFAULT_GROUP_ID
@@ -205,7 +211,7 @@ async def send_message(request: SendMessageRequest):
 
 
 @app.post("/api/message_sse")
-async def send_message_sse(request: SendMessageRequest):
+async def send_message_sse(request: SendMessageSseRequest):
     """
     发送玩家消息 API（SSE 分段返回）
 
@@ -220,7 +226,8 @@ async def send_message_sse(request: SendMessageRequest):
     group_id = _get_group_id(data)
     text = request.text.strip()
     player_name = request.player_name.strip() or "玩家"
-    language_code = request.language_code.strip()
+    custom_variables = request.custom_variables or {}
+    language_code = custom_variables.get("language_code", "en")
 
     result = await game_manager.send_message(group_id=group_id, text=text, player_name=player_name,
                                              language_code=language_code)
