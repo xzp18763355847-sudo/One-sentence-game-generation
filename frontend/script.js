@@ -476,8 +476,8 @@ async function startGame() {
     if (initialText) {
       body.text = initialText;
     }
-    // const data = await apiCall('/start', 'POST', body);
-    const data = await apiCall('/start_offcial_game', 'POST', body);
+    const data = await apiCall('/start', 'POST', body);
+    // const data = await apiCall('/start_offcial_game', 'POST', body);
     updateGameUI(data);
   } catch (e) {
     alert('启动失败: ' + e.message);
