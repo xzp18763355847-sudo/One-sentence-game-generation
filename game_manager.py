@@ -54,10 +54,10 @@ from game_generators import (
     build_outline_prompt,
     build_script_prompt,
     build_world_builder_prompt,
+    get_script_generator_system_prompt,
     validate_script_structure,
     normalize_script,
     OUTLINE_GENERATOR_SYSTEM_PROMPT,
-    SCRIPT_GENERATOR_SYSTEM_PROMPT,
     WORLD_BUILDER_SYSTEM_PROMPT, TURN_ENGINE_SYSTEM_PROMPT,
 )
 
@@ -624,7 +624,7 @@ class GameManager:
         raw = await self._call_openai(
             model=self.world_model,
             messages=[
-                {"role": "system", "content": SCRIPT_GENERATOR_SYSTEM_PROMPT},
+                {"role": "system", "content": get_script_generator_system_prompt(game_type)},
                 {"role": "user", "content": build_script_prompt(outline, game_type, language_code)},
             ],
             temperature=0.2,
