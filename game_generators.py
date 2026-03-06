@@ -278,37 +278,33 @@ _SCRIPT_GENERATOR_PROMPT_COMMON = """
 3. 【重要】必须使用指定的语言输出（language_code 会通过用户提示提供）。JSON 中的所有文本内容（包括 introduction、info、rules、关系描述、角色介绍、章节介绍等）都必须使用指定语言。
 """.strip()
 
-SCRIPT_GENERATOR_SYSTEM_PROMPT_STORY_CHAPTER = (
-    _SCRIPT_GENERATOR_PROMPT_COMMON
-    + "\n\n"
-    + """
-
+SCRIPT_GENERATOR_SYSTEM_PROMPT_BY_TYPE = {
+    GameType.STORY_CHAPTER.value: (
+        _SCRIPT_GENERATOR_PROMPT_COMMON
+        + "\n\n"
+        + """
 【游戏类型规则：章节剧情类（有结局）】
 1. 必须生成多个章节（至少 3-5 个），章节编号从 1 开始
 2. 章节列表必须包含明确的结局章节
 3. relationships 必须为非空数组，列出主要角色之间的关系
 4. 章节结构必须清晰体现冲突升级与结局收束
 """.strip()
-)
-
-SCRIPT_GENERATOR_SYSTEM_PROMPT_STORY_OPEN = (
-    _SCRIPT_GENERATOR_PROMPT_COMMON
-    + "\n\n"
-    + """
-
+    ),
+    GameType.STORY_OPEN.value: (
+        _SCRIPT_GENERATOR_PROMPT_COMMON
+        + "\n\n"
+        + """
 【游戏类型规则：开放式剧情（无结局）】
 1. chapters 可以为空数组，或仅包含 1 个开放式章节
 2. 不要设计“唯一终局”或“必然结束点”，保持可持续推进
 3. relationships 应列出主要角色关系，支持长期演化
 4. rules 需强调开放探索、持续互动和自由推进
 """.strip()
-)
-
-SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_ROUTE = (
-    _SCRIPT_GENERATOR_PROMPT_COMMON
-    + "\n\n"
-    + """
-
+    ),
+    GameType.COMPANION_ROUTE.value: (
+        _SCRIPT_GENERATOR_PROMPT_COMMON
+        + "\n\n"
+        + """
 【游戏类型规则：角色陪伴-攻略类（有结局）】
 1. relationships（人物关系数组）必须为空数组 []
 2. chapters（章节数组）必须为空数组 []
@@ -316,13 +312,11 @@ SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_ROUTE = (
 4. 重点生成角色信息，确保角色设定详细完整，突出可攻略路径
 5. rules 中需明确该玩法存在“可达成结局”
 """.strip()
-)
-
-SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_OPEN = (
-    _SCRIPT_GENERATOR_PROMPT_COMMON
-    + "\n\n"
-    + """
-
+    ),
+    GameType.COMPANION_OPEN.value: (
+        _SCRIPT_GENERATOR_PROMPT_COMMON
+        + "\n\n"
+        + """
 【游戏类型规则：角色陪伴-开放式（无结局）】
 1. relationships（人物关系数组）必须为空数组 []
 2. chapters（章节数组）必须为空数组 []
@@ -330,19 +324,17 @@ SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_OPEN = (
 4. 重点生成角色信息，强调陪伴感、互动日常与长期关系变化
 5. rules 中需明确该玩法无固定结局，可长期进行
 """.strip()
-)
-
-SCRIPT_GENERATOR_SYSTEM_PROMPT_BY_TYPE = {
-    GameType.STORY_CHAPTER.value: SCRIPT_GENERATOR_SYSTEM_PROMPT_STORY_CHAPTER,
-    GameType.STORY_OPEN.value: SCRIPT_GENERATOR_SYSTEM_PROMPT_STORY_OPEN,
-    GameType.COMPANION_ROUTE.value: SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_ROUTE,
-    GameType.COMPANION_OPEN.value: SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_OPEN,
-    # 兼容历史配置中的旧类型名称
-    "私聊角色类": SCRIPT_GENERATOR_SYSTEM_PROMPT_COMPANION_ROUTE,
+    ),
 }
+# 兼容历史配置中的旧类型名称
+SCRIPT_GENERATOR_SYSTEM_PROMPT_BY_TYPE["私聊角色类"] = SCRIPT_GENERATOR_SYSTEM_PROMPT_BY_TYPE[
+    GameType.COMPANION_ROUTE.value
+]
 
 # 默认导出，保持历史代码兼容（默认使用章节剧情类）
-SCRIPT_GENERATOR_SYSTEM_PROMPT = SCRIPT_GENERATOR_SYSTEM_PROMPT_STORY_CHAPTER
+SCRIPT_GENERATOR_SYSTEM_PROMPT = SCRIPT_GENERATOR_SYSTEM_PROMPT_BY_TYPE[
+    GameType.STORY_CHAPTER.value
+]
 
 
 def get_script_generator_system_prompt(game_type: str) -> str:
@@ -351,7 +343,7 @@ def get_script_generator_system_prompt(game_type: str) -> str:
     """
     normalized_game_type = game_type or ""
     return SCRIPT_GENERATOR_SYSTEM_PROMPT_BY_TYPE.get(
-        normalized_game_type, SCRIPT_GENERATOR_SYSTEM_PROMPT_STORY_CHAPTER
+        normalized_game_type, SCRIPT_GENERATOR_SYSTEM_PROMPT
     )
 
 
@@ -383,7 +375,7 @@ def build_script_prompt(outline: str, game_type: str, language_code: str = "cn")
 游戏类型：{game_name}
 输出语言：{language_name}（language_code: {language_code}）
 """
-
+    
     prompt += f"""
 【重要】请使用 {language_name} 生成游戏剧本。JSON 中的所有文本内容（包括 introduction、info、rules、关系描述、角色介绍、章节介绍等）都必须使用 {language_name}。只输出 JSON。
 """
