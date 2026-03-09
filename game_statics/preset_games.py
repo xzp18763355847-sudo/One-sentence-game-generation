@@ -400,7 +400,8 @@ PRESET_GAME_SNAPSHOTS = {
                     "scene": "Ruined bookstore",
                     "time": "Late afternoon",
                     "location": "City outskirts"
-                }
+                },
+                "guide": {"already_suggested": " ", "pending": " "},
             },
             "direction": "",
             "language_code": "en",
@@ -471,7 +472,7 @@ PRESET_GAME_SNAPSHOTS = {
             "player_goal": ""
         }
     },
-    "aNZEnipJSIyzqTBJTLvEPfYDLwrxEebZBmVAAKtODIzwgCAmJZKwlXyYLceDvpDAEDNaEkLDvSkknIGBSqgYkiJxGEcfIDrDIUbjTufZupyBdOvfvrdbxokJMItnpCjgW": {
+    "NZEnipJSIyzqTBJTLvEPfYDLwrxEebZBmVAAKtODIzwgCAmJZKwlXyYLceDvpDAEDNaEkLDvSkknIGBSqgYkiJxGEcfIDrDIUbjTufZupyBdOvfvrdbxokJMItnpCjgW": {
         "global_state": {
             "progress": "in_progress",
             "round_count": 0,
@@ -530,7 +531,8 @@ PRESET_GAME_SNAPSHOTS = {
                     "scene": "seaside mansion foyer",
                     "time": "early evening",
                     "location": "seaside mansion"
-                }
+                },
+                "guide": {"already_suggested": " ", "pending": " "},
             },
             "direction": "",
             "language_code": "en",

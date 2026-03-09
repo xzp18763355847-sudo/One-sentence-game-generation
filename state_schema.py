@@ -55,6 +55,10 @@ class StateSchema:
             "chapter_progress": str,  # 章节进度描述（如："进行中"、"已完成"）
             "chapter_goal_completed": bool,  # 当前章节目标是否已完成
         },
+        "guide": {  # 对话引导，用于避免重复回复
+            "already_suggested": str,  # 已经提出过的话
+            "pending": str,  # 下一步引导工作
+        },
     }
     
     @classmethod
@@ -248,6 +252,10 @@ class StateSchema:
                 "scene": "起始场景",
                 "time": "早晨",
                 "location": "未知",
+            },
+            "guide": {
+                "already_suggested": "",  # 初始为空字符串
+                "pending": "",  # 初始为空字符串
             },
         }
 
