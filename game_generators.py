@@ -29,6 +29,7 @@ _TURN_ENGINE_BASE_PROMPT = """
 - current_chapter：当前章节信息（包含 title, goal, description）（如果有章节）
 - game_type：游戏类型
 
+
 【输出格式（必须包含所有字段）】
 
 每次输出必须包含以下所有字段，即使某些字段为空：
@@ -41,7 +42,7 @@ _TURN_ENGINE_BASE_PROMPT = """
     {
       "name": "角色名称，如：Emma",
       "expression": "表情和细腻神态描述的组合，如：pale tense with trembling fingers、forced smile with avoiding gaze、eyes reddened but gently smiling 等。如果没有表情则为空字符串",
-      "text": "对话内容（只包含NPC的对话，不包含玩家说的话）"
+      "text": "对话内容（只包含NPC的对话，不包含玩家说的话），不能为空字符串"
     }
   ],
   "hooks": {
@@ -54,7 +55,7 @@ _TURN_ENGINE_BASE_PROMPT = """
 【重要规则】
 - 每次输出必须包含所有字段（transition、narration、sound、dialogues、hooks、state_delta、flags）
 - dialogues 只包含NPC的对话，不要包含玩家说的话（玩家的话已经在 player_message 中提供，不需要重复放入 dialogues）
-- 如果有NPC对话，在 dialogues 数组中添加对话对象，否则为空数组 []
+- dialogues 中必须添加对话对象，不能为空数组 []
 - 如果有场景描述，填写 narration 字段，否则为空字符串
 - 如果有声音效果，填写 sound 字段，否则为空字符串
 - 如果有行动建议，在 hooks.player_goal 中填写，否则为空字符串
@@ -79,46 +80,11 @@ _TURN_ENGINE_BASE_PROMPT = """
 - 如果玩家输入导致状态变化：在 state_delta 中描述变化
 - 如果玩家输入不导致状态变化：state_delta 可以为空对象 {}
 
-【Guide 智能引导规则】
-- guide 字段用于追踪对话历史和智能引导玩家，专门解决用户重复说话导致AI重复回应的问题
-- guide.already_suggested 是字符串，记录已经尝试过的建议主题（如"已尝试：探索,对话,检查物品,询问背景"）
-- guide.pending 是字符串，记录当前应该引导玩家转向的新方向或话题
-
-【核心策略：识别重复并主动转换】
-- 当玩家出现重复行为或话题时，AI必须：
-  1. 立即检查 guide.already_suggested，识别是否为重复内容
-  2. 主动在 narration 或 dialogues 中引入新元素，打破重复循环
-  3. 通过 hooks.player_goal 提供明确的新方向，而非重复旧建议
-  4. 让角色或环境主动推进剧情，而不是被动等待玩家
-
-【智能引导策略】
-- 重复询问处理：让NPC主动转换话题、提出新问题或透露新信息
-- 重复行为处理：环境发生变化、出现新的互动选项或遇到新障碍
-- 重复对话处理：引入新角色、新事件或推进时间线/剧情发展
-- 无意义循环：直接改变场景、时间或情况，强制推进故事
-
-【状态更新机制】
-- 每次引导时，将关键主题词追加到 state_delta.guide.already_suggested（格式：词1,词2,词3）
-- **话题数量限制**：only保留最近10个话题关键词，超出时自动删除最旧的话题
-- 更新逻辑：新话题 + 现有话题，按逗号分割后只取最后10个，重新组合成字符串
-- state_delta.guide.pending 更新为具体的下一步目标，指向剧情推进方向
-- 优先通过剧情发展和角色主动性解决重复问题，而非单纯的建议变换
-
-【话题管理示例】
-- 当前：already_suggested = "探索,对话,检查,询问,攻击,逃跑,思考,观察,交谈,搜索"（已满10个）
-- 新增话题"休息"：自动删除最旧的"探索"，变为"对话,检查,询问,攻击,逃跑,思考,观察,交谈,搜索,休息"
-- 这样确保始终只记录最近相关的10个话题，避免字符串无限增长
-【话题引导示例】
-- 用户重复问候语 → 角色："刚想到件事..."（主动引入新话题）
-- 用户重复探索 → 环境变化：发现新线索、来了新人、时间推进
-- 用户重复无效动作 → 角色或系统给出明确指引："也许我们该..."
-
 【状态字段说明】
 - player: {hp, max_hp, level, status, name} （hp/max_hp 仅剧情类游戏需要）
 - npc: {name, affection, relationship} （可选）
 - world: {scene, time, location}
 - chapter: {current_chapter, chapter_progress, chapter_goal_completed} （可选，章节类游戏需要）
-- guide: {already_suggested(str), pending(str)} （对话引导，用于避免重复回复）
 """.strip()
 
 # 角色攻略类游戏（有结局）特殊规则
@@ -608,7 +574,6 @@ WORLD_BUILDER_SYSTEM_PROMPT = """
 【状态结构要求（必须遵守）】
 initial_state 必须包含以下顶层字段（可根据游戏类型选择）：
 - "player": {hp, max_hp, level, status, name}  （玩家状态）
-- "guide": {already_suggested, pending} （对话引导）
 - "npc": {name, affection, relationship}  （可选，如果有NPC）
 - "world": {scene, time, location}  （世界状态）
 - "chapter": {current_chapter, chapter_progress, chapter_goal_completed}  （可选，章节类游戏需要）
