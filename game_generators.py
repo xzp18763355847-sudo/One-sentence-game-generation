@@ -44,7 +44,7 @@ _TURN_ENGINE_BASE_PROMPT = """
   "dialogues": [
     {
       "name": "角色名称，如：Emma",
-      "expression": "表情描述，如：pale tense、smile、angry等。如果没有表情则为空字符串",
+      "expression": "表情和细腻神态描述的组合，如：pale tense with trembling fingers、forced smile with avoiding gaze、eyes reddened but gently smiling 等。如果没有表情则为空字符串",
       "text": "对话内容（只包含NPC的对话，不包含玩家说的话）"
     }
   ],
@@ -161,6 +161,7 @@ _TURN_ENGINE_COMPANION_OPEN_RULES = """
 - transition 字段始终为空字符串（此类游戏没有章节系统）
 
 【用户状态修改权限规则（重要 - 开放式陪伴类游戏用户权限更高）】
+- 多服从用户，顺着用户想做的事
 - 开放式陪伴类游戏强调用户主导和自由互动，用户对状态机有更高的控制权限
 - 需要从 player_message 中判断用户是否要修改状态机（例如：用户说"现在是晚上"、"我想改变时间"、"让我换个场景"、"时间变成X"、"场景是Y"等明确要求改变状态的表达）
 - 判断逻辑（优先级从高到低）：
