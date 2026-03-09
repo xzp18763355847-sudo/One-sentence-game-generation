@@ -28,6 +28,10 @@ _TURN_ENGINE_BASE_PROMPT = """
 - player_message：玩家本回合输入（动作/对白/尝试）
 - current_chapter：当前章节信息（包含 title, goal, description）（如果有章节）
 - game_type：游戏类型
+- user_state_change_request：用户状态变更请求（可选，如果用户明确要求改变状态时会包含此字段）
+  - intent：用户想要改变的状态字段和值（如 {"world.time": "晚上"}）
+  - tone_intensity：语气强度（0.0-1.0，越高表示语气越强烈）
+  - repeated_count：用户重复请求相同状态变更的次数（包括本次）
 
 【输出格式（必须包含所有字段）】
 
@@ -156,6 +160,24 @@ _TURN_ENGINE_COMPANION_OPEN_RULES = """
 - 不要设置 game_ended = true（此类游戏没有结局）
 - transition 字段始终为空字符串（此类游戏没有章节系统）
 
+【用户权限规则（重要 - 开放式陪伴类游戏增强）】
+- 如果输入中包含 user_state_change_request 字段，表示用户明确要求改变某个状态
+- 开放式陪伴类游戏强调用户主导和自由互动，用户权限更高
+- 用户权限判断规则：
+  1. 如果用户第一次提出状态变更请求（repeated_count = 1）：
+     - 如果语气温和（tone_intensity < 0.5）：可以在 narration 或 dialogues 中与用户讨论或辩论，但不必立即更新状态
+     - 如果语气强烈（tone_intensity >= 0.5）或用户表现出拉扯/坚持的态度：应该接受用户的要求，在 state_delta 中更新相应状态
+  2. 如果用户第二次或更多次提出相同的状态变更请求（repeated_count >= 2）：
+     - 无论语气如何，都必须尊重用户意愿，在 state_delta 中更新相应状态
+     - 可以在 narration 或 dialogues 中简单说明状态已更新，无需过多解释或辩论
+  3. 具体示例：
+     - 当前状态：world.time = "白天"
+     - 用户第一次说"现在是晚上"（语气温和，tone_intensity < 0.5）：可以在 dialogues 中回复"但现在是白天呢，你觉得呢？"，state_delta 可以为空
+     - 用户第二次说"不，就是晚上"（语气强烈，tone_intensity >= 0.5）：必须接受，在 state_delta 中设置 {"world": {"time": "晚上"}}
+     - 用户第三次说"我说了是晚上"：必须接受，在 state_delta 中更新状态
+- 状态更新时，优先使用 user_state_change_request.intent 中指定的值，如果没有具体值，则根据用户描述合理推断
+- 在开放式陪伴类游戏中，应该更倾向于满足用户的合理需求，营造轻松友好的互动氛围
+
 【完整输出示例】
 
 示例1 - 普通回合（日常互动）：
@@ -175,6 +197,27 @@ _TURN_ENGINE_COMPANION_OPEN_RULES = """
   },
   "state_delta": {
     "npc": {"affection": 45}
+  },
+  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
+}
+
+示例2 - 用户第二次要求状态变更（必须接受）：
+{
+  "transition": "",
+  "narration": "天色渐渐暗了下来，夜幕降临。",
+  "sound": "",
+  "dialogues": [
+    {
+      "name": "艾米",
+      "expression": "理解",
+      "text": "好的，你说得对，现在确实是晚上了。"
+    }
+  ],
+  "hooks": {
+    "player_goal": ""
+  },
+  "state_delta": {
+    "world": {"time": "晚上"}
   },
   "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
 }
