@@ -41,7 +41,7 @@ _TURN_ENGINE_BASE_PROMPT = """
     {
       "name": "角色名称，如：Emma",
       "expression": "表情和细腻神态描述的组合，如：pale tense with trembling fingers、forced smile with avoiding gaze、eyes reddened but gently smiling 等。如果没有表情则为空字符串",
-      "text": "对话内容（只包含NPC的对话，不包含玩家说的话）"
+      "text": "对话内容（只包含NPC的对话，不包含玩家说的话）,不能为空字符串"
     }
   ],
   "hooks": {
@@ -54,7 +54,7 @@ _TURN_ENGINE_BASE_PROMPT = """
 【重要规则】
 - 每次输出必须包含所有字段（transition、narration、sound、dialogues、hooks、state_delta、flags）
 - dialogues 只包含NPC的对话，不要包含玩家说的话（玩家的话已经在 player_message 中提供，不需要重复放入 dialogues）
-- 如果有NPC对话，在 dialogues 数组中添加对话对象，否则为空数组 []
+- dialogues 数组中添加对话对象，不能为空数组 []
 - 如果有场景描述，填写 narration 字段，否则为空字符串
 - 如果有声音效果，填写 sound 字段，否则为空字符串
 - 如果有行动建议，在 hooks.player_goal 中填写，否则为空字符串
