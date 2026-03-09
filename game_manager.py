@@ -55,6 +55,7 @@ from game_generators import (
     build_script_prompt,
     build_world_builder_prompt,
     get_script_generator_system_prompt,
+    get_turn_engine_system_prompt,
     validate_script_structure,
     normalize_script,
     OUTLINE_GENERATOR_SYSTEM_PROMPT,
@@ -1158,7 +1159,9 @@ class GameManager:
                 f"- 严禁在同一轮输出多条 NPC 对话对象（即 dialogues.length 不能大于 1）。"
             )
 
-            system_content = TURN_ENGINE_SYSTEM_PROMPT + language_instruction + "\n\n" + director_prompt
+            # 根据游戏类型获取对应的提示词
+            turn_engine_prompt = get_turn_engine_system_prompt(gs.game_type)
+            system_content = turn_engine_prompt + language_instruction + "\n\n" + director_prompt
             start = time.time()
             raw = await self._call_openai(
                 model=self.turn_model,

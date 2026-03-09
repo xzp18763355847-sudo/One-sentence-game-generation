@@ -23,7 +23,7 @@ from config import DEFAULT_GROUP_ID
 from game_manager import GameManager, Game
 from game_statics.preset_games import PRESET_GAME_SNAPSHOTS
 from game_types import is_valid_game_type
-from narrative.prompt_builder import OFFCIAL_GAME_PROMPT
+from narrative.prompt_builder import OFFCIAL_GAME_PROMPT, get_official_game_prompt
 from utils.log_config import get_logger
 
 logger = get_logger(__name__)
@@ -48,6 +48,7 @@ class StartGameRequest(BaseModel):
     group_id: str = DEFAULT_GROUP_ID
     game_type: str = ""
     text: str = ""
+    game_id: str = ""
     language_code: str = "cn"
 
 
@@ -111,14 +112,25 @@ async def start_game(request: StartGameRequest):
     group_id = _get_group_id(data)
     game_type = request.game_type.strip()
     text = request.text.strip()
+    game_id = request.game_id.strip()
     language_code = request.language_code.strip()
+
+    # 兼容“表驱动”输入：传 game_id 时，按官方表配置拼接 text
+    if game_id:
+        if game_id not in OFFCIAL_GAME_PROMPT:
+            raise HTTPException(status_code=400, detail=f"无效的游戏ID: {game_id}")
+        prompt_text, prompt_game_type = get_official_game_prompt(game_id, language_code or "cn")
+        text = prompt_text.strip()
+        # 允许外部显式覆盖 game_type；未传时自动使用表中的类型
+        if not game_type:
+            game_type = (prompt_game_type or "").strip()
 
     # 验证游戏类型
     if game_type and not is_valid_game_type(game_type):
         raise HTTPException(status_code=400, detail=f"无效的游戏类型: {game_type}")
 
     logger.info(
-        f"POST /api/start 开始新游戏 group_id={group_id} game_type={game_type} text_len={len(text)} language_code={language_code}")
+        f"POST /api/start 开始新游戏 group_id={group_id} game_type={game_type} text_len={len(text)} language_code={language_code} game_id={game_id}")
 
     # 返回完整的游戏状态（包含 messages、state、script 等）
     # 这样前端可以正常显示游戏内容
