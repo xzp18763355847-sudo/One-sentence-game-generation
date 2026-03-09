@@ -160,23 +160,17 @@ _TURN_ENGINE_COMPANION_OPEN_RULES = """
 - 不要设置 game_ended = true（此类游戏没有结局）
 - transition 字段始终为空字符串（此类游戏没有章节系统）
 
-【用户权限规则（重要 - 开放式陪伴类游戏增强）】
-- 如果输入中包含 user_state_change_request 字段，表示用户明确要求改变某个状态
-- 开放式陪伴类游戏强调用户主导和自由互动，用户权限更高
-- 用户权限判断规则：
-  1. 如果用户第一次提出状态变更请求（repeated_count = 1）：
-     - 如果语气温和（tone_intensity < 0.5）：可以在 narration 或 dialogues 中与用户讨论或辩论，但不必立即更新状态
-     - 如果语气强烈（tone_intensity >= 0.5）或用户表现出拉扯/坚持的态度：应该接受用户的要求，在 state_delta 中更新相应状态
-  2. 如果用户第二次或更多次提出相同的状态变更请求（repeated_count >= 2）：
-     - 无论语气如何，都必须尊重用户意愿，在 state_delta 中更新相应状态
-     - 可以在 narration 或 dialogues 中简单说明状态已更新，无需过多解释或辩论
-  3. 具体示例：
-     - 当前状态：world.time = "白天"
-     - 用户第一次说"现在是晚上"（语气温和，tone_intensity < 0.5）：可以在 dialogues 中回复"但现在是白天呢，你觉得呢？"，state_delta 可以为空
-     - 用户第二次说"不，就是晚上"（语气强烈，tone_intensity >= 0.5）：必须接受，在 state_delta 中设置 {"world": {"time": "晚上"}}
-     - 用户第三次说"我说了是晚上"：必须接受，在 state_delta 中更新状态
-- 状态更新时，优先使用 user_state_change_request.intent 中指定的值，如果没有具体值，则根据用户描述合理推断
-- 在开放式陪伴类游戏中，应该更倾向于满足用户的合理需求，营造轻松友好的互动氛围
+【用户状态修改权限规则（重要 - 开放式陪伴类游戏用户权限更高）】
+- 开放式陪伴类游戏强调用户主导和自由互动，用户对状态机有更高的控制权限
+- 需要从 player_message 中判断用户是否要修改状态机（例如：用户说"现在是晚上"、"我想改变时间"、"让我换个场景"、"时间变成X"、"场景是Y"等明确要求改变状态的表达）
+- 判断逻辑（优先级从高到低）：
+  1. 如果用户在 recent_log 中重复提出相同状态修改请求（在最近几轮中说过类似的话）：必须尊重用户意愿，立即在 state_delta 中更新相应状态，并在 narration 或 dialogues 中自然接受用户的说法
+  2. 如果 player_message 包含明确的状态修改意图（如"现在是X"、"我想改变Y"、"让我Z"、"时间变成X"、"场景是Y"等）：
+     - 如果语气强烈（包含"必须"、"一定"、"就要"、"就是"等强烈表达）：必须尊重用户意愿，在 state_delta 中更新相应状态
+     - 如果语气不强烈但意图明确：应该尊重用户意愿，在 state_delta 中更新相应状态，可以在 narration 或 dialogues 中简单确认或自然过渡
+  3. 如果用户第一次提出状态修改且意图不够明确：可以在 narration 或 dialogues 中与用户确认，但应该倾向于接受用户的意图
+- 重要原则：开放式陪伴类游戏中，用户想要的状态就是应该的状态。只要用户明确表达了状态修改意图，就应该更新状态，不要过度辩论或拒绝。
+- 示例：如果当前状态是 world.time = "白天"，用户说"现在是晚上"，即使第一次说，也应该在 state_delta 中更新 world.time = "晚上"，并在 narration 中自然过渡到晚上场景。如果用户在 recent_log 中之前也说过类似的话，则必须更新，并在对话中明确接受用户的说法。
 
 【完整输出示例】
 
@@ -197,27 +191,6 @@ _TURN_ENGINE_COMPANION_OPEN_RULES = """
   },
   "state_delta": {
     "npc": {"affection": 45}
-  },
-  "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
-}
-
-示例2 - 用户第二次要求状态变更（必须接受）：
-{
-  "transition": "",
-  "narration": "天色渐渐暗了下来，夜幕降临。",
-  "sound": "",
-  "dialogues": [
-    {
-      "name": "艾米",
-      "expression": "理解",
-      "text": "好的，你说得对，现在确实是晚上了。"
-    }
-  ],
-  "hooks": {
-    "player_goal": ""
-  },
-  "state_delta": {
-    "world": {"time": "晚上"}
   },
   "flags": {"game_ended": false, "reason": "", "chapter_goal_completed": false}
 }
@@ -361,9 +334,18 @@ def get_turn_engine_system_prompt(game_type: str) -> str:
         对应的提示词字符串
     """
     normalized_game_type = game_type or ""
-    return TURN_ENGINE_SYSTEM_PROMPT_BY_TYPE.get(
+    prompt = TURN_ENGINE_SYSTEM_PROMPT_BY_TYPE.get(
         normalized_game_type, TURN_ENGINE_SYSTEM_PROMPT
     )
+    # 调试日志：确认使用的提示词类型
+    if normalized_game_type not in TURN_ENGINE_SYSTEM_PROMPT_BY_TYPE:
+        logger.warning(
+            f"⚠️ 游戏类型 '{normalized_game_type}' 不在提示词字典中，使用默认提示词。"
+            f"可用类型: {list(TURN_ENGINE_SYSTEM_PROMPT_BY_TYPE.keys())}"
+        )
+    else:
+        logger.debug(f"✓ 使用游戏类型 '{normalized_game_type}' 的提示词")
+    return prompt
 
 # =========================
 # 大纲生成器提示词
