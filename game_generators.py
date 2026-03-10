@@ -71,11 +71,11 @@ _TURN_ENGINE_BASE_PROMPT = """
 - 每次输出必须包含 state_delta 和 flags 字段
 - state_delta 的顶层 key 必须是允许的顶层字段（player/npc/world/chapter）
 - 对于已存在的顶层字段：只能更新已存在的子字段，严禁新增、删除或重命名任何子字段名
-- 特殊规则：如果回合剧情中有新NPC出现，可以在 state_delta 中添加新的 "npc" 字段（包含完整的 npc 对象：name, affection, relationship）
+- 特殊规则：如果回合剧情中有新NPC出现，可以在 state_delta 中添加新的 "npc" 字段（包含完整的 npc 对象：name, affection, relationship, appearance）
   - 只有当 current_state 中没有 npc 字段时，才允许添加新的 npc
-  - 新 npc 必须包含 name 字段，affection 初始值建议为 0，relationship 初始值建议为 "陌生" 或类似描述
+  - 新 npc 必须包含 name 字段，affection 初始值建议为 0，relationship 初始值建议为 "陌生" 或类似描述，appearance 为新NPC的衣服等外貌特征
 - state_delta 只写变化，不要重写整个 current_state
-- 只允许修改数值（如 hp, affection, level）或字符串（如 status, scene, time）
+- 只允许修改数值（如 hp, affection, level）或字符串（如 status, scene, time, appearance, scene_description）
 - 如果玩家输入导致状态变化：在 state_delta 中描述变化
 - 如果玩家输入不导致状态变化：state_delta 可以为空对象 {}
 
@@ -114,9 +114,9 @@ _TURN_ENGINE_BASE_PROMPT = """
 - 用户重复无效动作 → 角色或系统给出明确指引："也许我们该..."
 
 【状态字段说明】
-- player: {hp, max_hp, level, status, name} （hp/max_hp 仅剧情类游戏需要）
-- npc: {name, affection, relationship} （可选）
-- world: {scene, time, location}
+- player: {hp, max_hp, level, status, name, appearance} （hp/max_hp 仅剧情类游戏需要，appearance为玩家的衣服详细的的款式颜色等外貌特征）
+- npc: {name, affection, relationship, appearance} （可选，appearance为NPC的详细的衣服款式颜色等外貌特征）
+- world: {scene, scene_description, time, location} （scene_description为场景的详细描写，scene为场景名称，time为时间，location为地点）
 - chapter: {current_chapter, chapter_progress, chapter_goal_completed} （可选，章节类游戏需要）
 - guide: {already_suggested(str), pending(str)} （对话引导，用于避免重复回复）
 """.strip()
@@ -607,10 +607,10 @@ WORLD_BUILDER_SYSTEM_PROMPT = """
 
 【状态结构要求（必须遵守）】
 initial_state 必须包含以下顶层字段（可根据游戏类型选择）：
-- "player": {hp, max_hp, level, status, name}  （玩家状态）
+- "player": {hp, max_hp, level, status, name, appearance}  （玩家状态，appearance为玩家的详细的衣服款式颜色等外貌特征）
 - "guide": {already_suggested, pending} （对话引导）
-- "npc": {name, affection, relationship}  （可选，如果有NPC）
-- "world": {scene, time, location}  （世界状态）
+- "npc": {name, affection, relationship, appearance}  （可选，如果有NPC，appearance为NPC的详细的衣服款式颜色等详细的外貌特征）
+- "world": {scene, scene_description, time, location}  （世界状态，scene_description为场景的详细描写）
 - "chapter": {current_chapter, chapter_progress, chapter_goal_completed}  （可选，章节类游戏需要）
 
 【角色类游戏特殊规则】

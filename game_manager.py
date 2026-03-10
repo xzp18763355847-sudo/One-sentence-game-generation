@@ -343,6 +343,7 @@ class Game:
 # manager（方案 A：锁内 read -> modify -> write）
 # =========================
 class GameManager:
+
     def __init__(self):
         """
         初始化游戏管理器
@@ -350,15 +351,18 @@ class GameManager:
         功能：初始化游戏管理器，设置 OpenAI 客户端、模型配置。
         每个 group_id 对应独立的 Redis 键，实现群级别的游戏隔离。
         """
-        http_client = httpx.AsyncClient(timeout=httpx.Timeout(60.0, connect=10.0))
+        http_client = httpx.AsyncClient(
+            timeout=httpx.Timeout(60.0, connect=10.0))
         self.client = AsyncOpenAI(
             api_key=config.OPENAI_API_KEY,
             base_url=config.OPENAI_BASE_URL,
             http_client=http_client,
         )
 
-        self.world_model = getattr(config, "STORY_WORLD_MODEL", config.OPENAI_MODEL)
-        self.turn_model = getattr(config, "STORY_TURN_MODEL", config.OPENAI_MODEL)
+        self.world_model = getattr(config, "STORY_WORLD_MODEL",
+                                   config.OPENAI_MODEL)
+        self.turn_model = getattr(config, "STORY_TURN_MODEL",
+                                  config.OPENAI_MODEL)
 
         logger.info(f"🚀 GameManager initialized, using Redis for persistence")
 
@@ -395,7 +399,8 @@ class GameManager:
         _tls.game = value
 
     # ---------- txn (方案 A 核心，按 group_id 隔离) ----------
-    async def _with_txn_for_group(self, group_id: str, fn: Callable[[], T]) -> T:
+    async def _with_txn_for_group(self, group_id: str, fn: Callable[[],
+                                                                    T]) -> T:
         """
         单次请求事务（按 group_id 隔离，保证数据一致性）
 
@@ -443,7 +448,9 @@ class GameManager:
             return
         gs = self.game.global_state
         lines = [f"[状态] {action}"]
-        lines.append(f"  [游戏] progress={gs.progress.value} round={gs.round_count}/{gs.max_rounds} ended={gs.ended_reason or '-'}")
+        lines.append(
+            f"  [游戏] progress={gs.progress.value} round={gs.round_count}/{gs.max_rounds} ended={gs.ended_reason or '-'}"
+        )
         if self.game.narrative_state:
             ns = self.game.narrative_state
             r = ns.relationship
@@ -455,12 +462,14 @@ class GameManager:
             parts = []
             for k, v in gs.story_state.items():
                 if isinstance(v, dict):
-                    sub = ",".join(f"{sk}={v.get(sk)}" for sk in list(v.keys())[:4])
+                    sub = ",".join(f"{sk}={v.get(sk)}"
+                                   for sk in list(v.keys())[:4])
                     parts.append(f"{k}({sub})")
             lines.append(f"  [剧情] {' '.join(parts)}")
         logger.info("\n".join(lines))
 
-    def _log_story_delta(self, round_num: int, delta: dict, applied: bool) -> None:
+    def _log_story_delta(self, round_num: int, delta: dict,
+                         applied: bool) -> None:
         """
         记录剧情状态变更日志
 
@@ -473,14 +482,17 @@ class GameManager:
         if not delta:
             logger.info(f"[剧情变更] 回合{round_num} 无变化")
             return
-        parts = [f"{tk}.{k}={v}" for tk, kv in delta.items() if isinstance(kv, dict) for k, v in kv.items()]
+        parts = [
+            f"{tk}.{k}={v}" for tk, kv in delta.items()
+            if isinstance(kv, dict) for k, v in kv.items()
+        ]
         status = "已应用" if applied else "校验后为空"
         logger.info(f"[剧情变更] 回合{round_num} {status}: {' '.join(parts)}")
 
     # ---------- aigc_generate ----------
     # 第 2 回合、第 5 回合及之后每 5 回合触发；多种类型时按触发次序交替
     # _AIGC_GENERATE_VALUES = ("game_image", "game_video_with_audio_self")
-    _AIGC_GENERATE_VALUES = ("game_video_with_audio_self",)
+    _AIGC_GENERATE_VALUES = ("game_video_with_audio_self", )
 
     @staticmethod
     def _pick_aigc_generate(round_count: int) -> Optional[str]:
@@ -518,13 +530,16 @@ class GameManager:
         meta_key = self._redis_meta_key(group_id)
         messages_key = self._redis_messages_key(group_id)
 
-        await redis_dao.redis.set(meta_key, json.dumps(meta, ensure_ascii=False))
+        await redis_dao.redis.set(meta_key, json.dumps(meta,
+                                                       ensure_ascii=False))
         await redis_dao.redis.set(
             messages_key,
             json.dumps(messages_payload, ensure_ascii=False),
             ex=config.GAME_MESSAGES_TTL_SECONDS,
         )
-        logger.debug(f"📁 Game state persisted: meta={meta_key}, messages={messages_key}")
+        logger.debug(
+            f"📁 Game state persisted: meta={meta_key}, messages={messages_key}"
+        )
 
     async def _load_snapshot_from_redis(self, group_id: str) -> None:
         """从 Redis 加载快照到线程局部变量：先读 meta，再读 messages；支持旧键迁移；读到时刷新消息 TTL"""
@@ -544,7 +559,9 @@ class GameManager:
                     self.game = Game.from_snapshot(snapshot)
                     await self._persist_to_redis(group_id)
                     await redis_dao.redis.delete(legacy_key)
-                    logger.debug(f"📁 Migrated from legacy key to meta+messages: {group_id}")
+                    logger.debug(
+                        f"📁 Migrated from legacy key to meta+messages: {group_id}"
+                    )
                     return
                 self.game = None
                 logger.debug(f"📁 No game state found for group_id: {group_id}")
@@ -554,19 +571,24 @@ class GameManager:
             messages_json = await redis_dao.redis.get(messages_key)
             if messages_json is not None:
                 meta["messages"] = json.loads(messages_json)
-                await redis_dao.redis.expire(messages_key, config.GAME_MESSAGES_TTL_SECONDS)
+                await redis_dao.redis.expire(messages_key,
+                                             config.GAME_MESSAGES_TTL_SECONDS)
             else:
                 meta["messages"] = []
             meta["messages"] = meta["messages"][-config.GAME_MESSAGES_MAX:]
 
             self.game = Game.from_snapshot(meta)
-            logger.debug(f"📁 Game state loaded: meta={meta_key}, messages={messages_key}")
+            logger.debug(
+                f"📁 Game state loaded: meta={meta_key}, messages={messages_key}"
+            )
         except Exception as e:
-            logger.warning(f"load snapshot from redis failed: {e} (group_id={group_id})")
+            logger.warning(
+                f"load snapshot from redis failed: {e} (group_id={group_id})")
             self.game = None
 
     # ---------- openai ----------
-    async def _call_openai(self, model: str, messages: list, temperature: float) -> str:
+    async def _call_openai(self, model: str, messages: list,
+                           temperature: float) -> str:
         """
         调用 OpenAI API
 
@@ -584,7 +606,10 @@ class GameManager:
         )
         return resp.choices[0].message.content or ""
 
-    async def _generate_outline(self, user_input: str, game_type: str = "", language_code: str = "cn") -> str:
+    async def _generate_outline(self,
+                                user_input: str,
+                                game_type: str = "",
+                                language_code: str = "cn") -> str:
         """
         根据用户输入的几句话生成剧情大纲
         
@@ -595,12 +620,22 @@ class GameManager:
             language_code: 语言代码（cn=中文, en=英文）
         返回：生成的剧情大纲文本
         """
-        logger.info(f"📝 开始生成大纲，用户输入: {user_input[:100]}, game_type: {game_type}, language: {language_code}")
+        logger.info(
+            f"📝 开始生成大纲，用户输入: {user_input[:100]}, game_type: {game_type}, language: {language_code}"
+        )
         raw = await self._call_openai(
             model=self.world_model,
             messages=[
-                {"role": "system", "content": OUTLINE_GENERATOR_SYSTEM_PROMPT},
-                {"role": "user", "content": build_outline_prompt(user_input, game_type, language_code)},
+                {
+                    "role": "system",
+                    "content": OUTLINE_GENERATOR_SYSTEM_PROMPT
+                },
+                {
+                    "role":
+                    "user",
+                    "content":
+                    build_outline_prompt(user_input, game_type, language_code)
+                },
             ],
             temperature=0.7,
         )
@@ -610,7 +645,10 @@ class GameManager:
         logger.info(f"📝 大纲生成完成，长度: {len(outline)}")
         return outline
 
-    async def _generate_script(self, outline: str, game_type: str = "", language_code: str = "cn") -> dict:
+    async def _generate_script(self,
+                               outline: str,
+                               game_type: str = "",
+                               language_code: str = "cn") -> dict:
         """
         根据大纲生成游戏剧本
         
@@ -621,12 +659,22 @@ class GameManager:
             language_code: 语言代码（cn=中文, en=英文）
         返回：生成的剧本字典
         """
-        logger.info(f"📜 开始生成剧本，大纲长度: {len(outline)}, game_type: {game_type}, language: {language_code}")
+        logger.info(
+            f"📜 开始生成剧本，大纲长度: {len(outline)}, game_type: {game_type}, language: {language_code}"
+        )
         raw = await self._call_openai(
             model=self.world_model,
             messages=[
-                {"role": "system", "content": get_script_generator_system_prompt(game_type)},
-                {"role": "user", "content": build_script_prompt(outline, game_type, language_code)},
+                {
+                    "role": "system",
+                    "content": get_script_generator_system_prompt(game_type)
+                },
+                {
+                    "role":
+                    "user",
+                    "content":
+                    build_script_prompt(outline, game_type, language_code)
+                },
             ],
             temperature=0.2,
         )
@@ -654,8 +702,10 @@ class GameManager:
                 script = normalize_script(script)
             else:
                 script = normalize_script(script)
-        
-        logger.info(f"📜 剧本生成完成，包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节")
+
+        logger.info(
+            f"📜 剧本生成完成，包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节"
+        )
         return script
 
     def _fallback_world(self) -> dict:
@@ -674,15 +724,21 @@ class GameManager:
         template["world"]["scene"] = "黑暗房间"
         template["world"]["time"] = "未知"
         template["world"]["location"] = "未知"
-        
+
         return {
-            "assets": {"style": "fallback", "notes": "world builder failed"},
+            "assets": {
+                "style": "fallback",
+                "notes": "world builder failed"
+            },
             "initial_state": template,
             "player_facing_introduction": "（世界构建失败：进入 fallback 故事）",
             "first_scene_prompt": "你在一间黑暗房间醒来，门缝漏出冷光。你要做什么？",
         }
 
-    async def _build_world(self, script: dict, game_type: str = "", language_code: str = "cn") -> dict:
+    async def _build_world(self,
+                           script: dict,
+                           game_type: str = "",
+                           language_code: str = "cn") -> dict:
         """
         构建游戏世界
 
@@ -693,12 +749,23 @@ class GameManager:
             language_code: 语言代码（cn=中文, en=英文）
         返回：包含 assets、initial_state、chapters 等字段的字典
         """
-        logger.info(f"🌍 开始构建世界，剧本包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节，language: {language_code}")
+        logger.info(
+            f"🌍 开始构建世界，剧本包含 {len(script.get('characters', []))} 个角色，{len(script.get('chapters', []))} 个章节，language: {language_code}"
+        )
         raw = await self._call_openai(
             model=self.world_model,
             messages=[
-                {"role": "system", "content": WORLD_BUILDER_SYSTEM_PROMPT},
-                {"role": "user", "content": build_world_builder_prompt(script, game_type, language_code)},
+                {
+                    "role": "system",
+                    "content": WORLD_BUILDER_SYSTEM_PROMPT
+                },
+                {
+                    "role":
+                    "user",
+                    "content":
+                    build_world_builder_prompt(script, game_type,
+                                               language_code)
+                },
             ],
             temperature=0.2,
         )
@@ -710,16 +777,20 @@ class GameManager:
         if not isinstance(obj.get("assets"), dict):
             obj["assets"] = {}
         genre = (obj.get("game_genre") or "story")
-        if not isinstance(genre, str) or genre not in ("mystery", "romance", "exploration", "adventure", "story", "mixed"):
+        if not isinstance(genre, str) or genre not in ("mystery", "romance",
+                                                       "exploration",
+                                                       "adventure", "story",
+                                                       "mixed"):
             genre = "story"
         obj["assets"]["game_genre"] = genre
-        if not isinstance(obj.get("initial_state"), dict) or not obj["initial_state"]:
+        if not isinstance(obj.get("initial_state"),
+                          dict) or not obj["initial_state"]:
             obj["initial_state"] = self._fallback_world()["initial_state"]
         if not isinstance(obj.get("player_facing_introduction"), str):
             obj["player_facing_introduction"] = "欢迎来到剧情游戏。"
         if not isinstance(obj.get("first_scene_prompt"), str):
             obj["first_scene_prompt"] = "故事开始了。你要做什么？"
-        
+
         # 验证和初始化章节列表
         # 优先使用剧本中的章节信息
         script_chapters = []
@@ -727,7 +798,7 @@ class GameManager:
             script_chapters = script.get("chapters", [])
         game_info = get_game_type_info(game_type)
         has_chapters = game_info.get("has_chapters", False)
-        
+
         if has_chapters and script_chapters:
             # 如果有章节要求且剧本中有章节，从剧本中提取章节信息
             chapters = []
@@ -741,17 +812,29 @@ class GameManager:
                 })
             if chapters:
                 obj["chapters"] = chapters
-        
+
         # 如果世界构建器返回了章节，使用它；否则检查是否需要默认章节
-        if not isinstance(obj.get("chapters"), list) or len(obj.get("chapters", [])) == 0:
+        if not isinstance(obj.get("chapters"), list) or len(
+                obj.get("chapters", [])) == 0:
             if has_chapters:
                 # 有章节要求的游戏，生成默认章节
-                obj["chapters"] = [
-                    {"title": "第一章：开端", "goal": "了解基本情况和目标", "description": "故事开始，熟悉环境和角色"},
-                    {"title": "第二章：发展", "goal": "推进主要剧情", "description": "深入故事，面对挑战"},
-                    {"title": "第三章：高潮", "goal": "解决核心冲突", "description": "故事达到高潮，做出关键选择"},
-                    {"title": "第四章：结局", "goal": "完成故事", "description": "根据选择迎来结局"}
-                ]
+                obj["chapters"] = [{
+                    "title": "第一章：开端",
+                    "goal": "了解基本情况和目标",
+                    "description": "故事开始，熟悉环境和角色"
+                }, {
+                    "title": "第二章：发展",
+                    "goal": "推进主要剧情",
+                    "description": "深入故事，面对挑战"
+                }, {
+                    "title": "第三章：高潮",
+                    "goal": "解决核心冲突",
+                    "description": "故事达到高潮，做出关键选择"
+                }, {
+                    "title": "第四章：结局",
+                    "goal": "完成故事",
+                    "description": "根据选择迎来结局"
+                }]
             else:
                 # 无章节要求的游戏，章节列表为空
                 obj["chapters"] = []
@@ -761,7 +844,7 @@ class GameManager:
         if not isinstance(initial_state, dict):
             initial_state = self._fallback_world()["initial_state"]
             obj["initial_state"] = initial_state
-        
+
         # 确保至少包含 player 和 world（必需字段）
         if "player" not in initial_state:
             logger.warning("⚠️ initial_state 缺少 'player' 字段，使用 fallback")
@@ -771,7 +854,7 @@ class GameManager:
             logger.warning("⚠️ initial_state 缺少 'world' 字段，使用 fallback")
             fallback = self._fallback_world()["initial_state"]
             initial_state["world"] = fallback.get("world", {})
-        
+
         # 章节类游戏：确保包含 chapter 字段
         if game_type == "story_chapter":
             if "chapter" not in initial_state:
@@ -794,7 +877,7 @@ class GameManager:
                     chapter["chapter_goal_completed"] = False
                 initial_state["chapter"] = chapter
                 logger.info("🔧 章节类游戏：已确保 chapter 字段完整")
-        
+
         # 角色类游戏特殊处理：移除 player 中的 hp 和 max_hp 字段
         if game_type in ("companion_route", "companion_open"):
             if isinstance(initial_state.get("player"), dict):
@@ -805,7 +888,7 @@ class GameManager:
                 if "max_hp" in player:
                     del player["max_hp"]
                     logger.info("🔧 角色类游戏：已移除 player.max_hp 字段")
-            
+
             # 确保只有一个 NPC
             if "npc" in initial_state:
                 # 如果 npc 是列表，只保留第一个
@@ -819,11 +902,16 @@ class GameManager:
                 elif not isinstance(initial_state["npc"], dict):
                     logger.warning("⚠️ 角色类游戏：NPC 格式不正确，应为字典")
 
-        logger.info(f"🌍 世界构建完成，assets 键: {list(obj.get('assets', {}).keys())}, initial_state 键: {list(obj.get('initial_state', {}).keys())}")
-        logger.info(f"🌍 initial_state 结构验证: player={bool(initial_state.get('player'))}, world={bool(initial_state.get('world'))}, npc={bool(initial_state.get('npc'))}")
+        logger.info(
+            f"🌍 世界构建完成，assets 键: {list(obj.get('assets', {}).keys())}, initial_state 键: {list(obj.get('initial_state', {}).keys())}"
+        )
+        logger.info(
+            f"🌍 initial_state 结构验证: player={bool(initial_state.get('player'))}, world={bool(initial_state.get('world'))}, npc={bool(initial_state.get('npc'))}"
+        )
         return obj
 
-    def _compact_assets_for_turn(self, assets: Dict[str, Any]) -> Dict[str, Any]:
+    def _compact_assets_for_turn(self, assets: Dict[str,
+                                                    Any]) -> Dict[str, Any]:
         """
         压缩资产用于回合引擎（移除 secrets）
         
@@ -851,11 +939,18 @@ class GameManager:
         out = []
         for m in msgs:
             role = "assistant" if m.role == "ai" else "user"
-            out.append({"role": role, "content": f"{m.player_name}: {m.content}"})
+            out.append({
+                "role": role,
+                "content": f"{m.player_name}: {m.content}"
+            })
         return out
 
     # ---------- public API ----------
-    async def start_game(self, group_id: str, game_type: str = "", text: str = "", language_code: str = "cn") -> dict:
+    async def start_game(self,
+                         group_id: str,
+                         game_type: str = "",
+                         text: str = "",
+                         language_code: str = "cn") -> dict:
         """
         开始新游戏（按 group_id 隔离）
 
@@ -866,6 +961,7 @@ class GameManager:
             language_code: 语言代码（cn=中文, en=英文，默认cn）
         返回：包含游戏状态的字典
         """
+
         async def _impl():
             self.game = Game()
             gs = self.game.global_state
@@ -891,36 +987,57 @@ class GameManager:
 
                 gs.game_type = game_type
                 # 直接生成大纲
-                generated_outline = await self._generate_outline(text, game_type, gs.language_code)
+                generated_outline = await self._generate_outline(
+                    text, game_type, gs.language_code)
                 gs.outline = generated_outline
                 gs.progress = Progress.AWAITING_OUTLINE_REVIEW
 
-                outline_msg = get_system_message("outline_generated", gs.language_code, outline=generated_outline)
+                outline_msg = get_system_message("outline_generated",
+                                                 gs.language_code,
+                                                 outline=generated_outline)
                 self.game.messages.append(
-                    Message(role="ai", player_name="主持人", content=outline_msg, is_system=False)
-                )
+                    Message(role="ai",
+                            player_name="主持人",
+                            content=outline_msg,
+                            is_system=False))
                 self.game.last_turn_response = {
-                    "transition": "", "narration": "", "sound": "",
-                    "dialogues": [], "hooks": {"player_goal": ""}
+                    "transition": "",
+                    "narration": "",
+                    "sound": "",
+                    "dialogues": [],
+                    "hooks": {
+                        "player_goal": ""
+                    }
                 }
                 self._log_flow("大纲生成完成", "等待用户审核/修改")
                 return self._build_status_response()
 
             start_msg = get_system_message("game_started", gs.language_code)
             self.game.messages.append(
-                Message(role="ai", player_name="主持人", content=start_msg, is_system=True)
-            )
+                Message(role="ai",
+                        player_name="主持人",
+                        content=start_msg,
+                        is_system=True))
             # 更新 last_turn_response
             self.game.last_turn_response = {
-                "transition": "", "narration": "", "sound": "",
-                "dialogues": [], "hooks": {"player_goal": ""}
+                "transition": "",
+                "narration": "",
+                "sound": "",
+                "dialogues": [],
+                "hooks": {
+                    "player_goal": ""
+                }
             }
             self._log_flow("开始游戏", "等待玩家输入初始想法")
             return self._build_status_response()
 
         return await self._with_txn_for_group(group_id, _impl)
 
-    async def send_message(self, group_id: str, text: str, player_name: str = "玩家", language_code: str = "en") -> dict:
+    async def send_message(self,
+                           group_id: str,
+                           text: str,
+                           player_name: str = "玩家",
+                           language_code: str = "en") -> dict:
         """
         发送玩家消息并推进游戏（按 group_id 隔离）
         
@@ -935,10 +1052,10 @@ class GameManager:
             return {"error": "请输入内容"}
 
         async def _impl():
-            s = time.time()   # 记录开始时间
+            s = time.time()  # 记录开始时间
             # 捕获外部作用域的变量，避免闭包作用域问题
             nonlocal text, player_name, language_code
-            
+
             if not self.game:
                 return {"error": "游戏未开始"}
 
@@ -947,30 +1064,35 @@ class GameManager:
                 return {"error": "游戏已结束"}
 
             # 记录玩家消息
-            self.game.messages.append(Message(role="player", player_name=player_name, content=text))
+            self.game.messages.append(
+                Message(role="player", player_name=player_name, content=text))
             gs.language_code = language_code
             # 1) 等待初始输入：生成大纲
             if gs.progress == Progress.AWAITING_INITIAL_INPUT:
-                generated_outline = await self._generate_outline(text, gs.game_type, gs.language_code)
+                generated_outline = await self._generate_outline(
+                    text, gs.game_type, gs.language_code)
                 gs.outline = generated_outline
                 gs.progress = Progress.AWAITING_OUTLINE_REVIEW
-                
-                outline_msg = get_system_message("outline_generated", gs.language_code, outline=generated_outline)
+
+                outline_msg = get_system_message("outline_generated",
+                                                 gs.language_code,
+                                                 outline=generated_outline)
                 self.game.messages.append(
                     Message(
                         role="ai",
                         player_name="主持人",
                         content=outline_msg,
                         is_system=False,
-                    )
-                )
+                    ))
                 # 更新 last_turn_response
                 self.game.last_turn_response = {
                     "transition": "",
                     "narration": "",
                     "sound": "",
                     "dialogues": [],
-                    "hooks": {"player_goal": ""}
+                    "hooks": {
+                        "player_goal": ""
+                    }
                 }
                 self._log_flow("大纲生成完成", "等待用户审核/修改")
                 return self._build_status_response()
@@ -979,50 +1101,55 @@ class GameManager:
             if gs.progress == Progress.AWAITING_OUTLINE_REVIEW:
                 # 检查是否是确认指令
                 text_lower = text.lower().strip()
-                if text_lower in ("确认", "开始", "ok", "yes", "确认生成", "开始游戏", "生成游戏"):
+                if text_lower in ("确认", "开始", "ok", "yes", "确认生成", "开始游戏",
+                                  "生成游戏"):
                     # 使用当前大纲生成游戏
                     final_outline = gs.outline
                     # 添加确认提示消息
-                    confirm_msg = get_system_message("confirm_generating", gs.language_code)
+                    confirm_msg = get_system_message("confirm_generating",
+                                                     gs.language_code)
                     self.game.messages.append(
                         Message(
                             role="ai",
                             player_name="主持人",
                             content=confirm_msg,
                             is_system=True,
-                        )
-                    )
+                        ))
                 else:
                     # 用户修改了大纲，更新 outline
                     final_outline = text
                     gs.outline = text
-                    update_msg = get_system_message("outline_updated", gs.language_code)
+                    update_msg = get_system_message("outline_updated",
+                                                    gs.language_code)
                     self.game.messages.append(
                         Message(
                             role="ai",
                             player_name="主持人",
                             content=update_msg,
                             is_system=False,
-                        )
-                    )
+                        ))
                     # 更新 last_turn_response
                     self.game.last_turn_response = {
                         "transition": "",
                         "narration": "",
                         "sound": "",
                         "dialogues": [],
-                        "hooks": {"player_goal": ""}
+                        "hooks": {
+                            "player_goal": ""
+                        }
                     }
                     self._log_flow("大纲已更新", "等待用户确认")
                     return self._build_status_response()
-                
+
                 # 确认后先生成剧本，再构建世界
-                script = await self._generate_script(final_outline, gs.game_type, gs.language_code)
+                script = await self._generate_script(final_outline,
+                                                     gs.game_type,
+                                                     gs.language_code)
                 gs.script = script
-                
+
                 # 构建世界
-                built = await self._build_world(script, gs.game_type, gs.language_code)
-                
+                built = await self._build_world(script, gs.game_type,
+                                                gs.language_code)
 
                 gs.assets = built.get("assets", {}) or {}
                 gs.story_state = built.get("initial_state", {}) or {}
@@ -1033,15 +1160,17 @@ class GameManager:
                 gs.chapter_goal_completed = False
                 _genre = gs.assets.get("game_genre", "story")
                 self.game.narrative_state = init_narrative_state(genre=_genre)
-                
-               
 
                 intro = (built.get("player_facing_introduction") or "").strip()
                 first = (built.get("first_scene_prompt") or "").strip()
 
                 if intro:
-                    self.game.messages.append(Message(role="ai", player_name="主持人", content=intro, is_system=True))
-                
+                    self.game.messages.append(
+                        Message(role="ai",
+                                player_name="主持人",
+                                content=intro,
+                                is_system=True))
+
                 # 显示第一章开始提示
                 if gs.chapters and len(gs.chapters) > 0:
                     chapter = gs.chapters[0]
@@ -1051,28 +1180,43 @@ class GameManager:
                     if chapter_goal:
                         chapter_start_msg += f"🎯 本章目标：{chapter_goal}\n\n"
                     chapter_start_msg += first
-                    self.game.messages.append(Message(role="ai", player_name="主持人", content=chapter_start_msg, is_system=False))
-                    
+                    self.game.messages.append(
+                        Message(role="ai",
+                                player_name="主持人",
+                                content=chapter_start_msg,
+                                is_system=False))
+
                     # 设置第一章开始的transition输出
                     self.game.last_turn_response = {
                         "transition": "chapter_1",
                         "narration": "",
                         "sound": "",
                         "dialogues": [],
-                        "hooks": {"player_goal": ""}
+                        "hooks": {
+                            "player_goal": ""
+                        }
                     }
                 else:
-                    self.game.messages.append(Message(role="ai", player_name="主持人", content=first, is_system=False))
+                    self.game.messages.append(
+                        Message(role="ai",
+                                player_name="主持人",
+                                content=first,
+                                is_system=False))
                     # 更新 last_turn_response
                     self.game.last_turn_response = {
                         "transition": "",
                         "narration": "",
                         "sound": "",
                         "dialogues": [],
-                        "hooks": {"player_goal": ""}
+                        "hooks": {
+                            "player_goal": ""
+                        }
                     }
 
-                self._log_flow("世界构建完成", f"genre={_genre} phase={self.game.narrative_state.phase_value}")
+                self._log_flow(
+                    "世界构建完成",
+                    f"genre={_genre} phase={self.game.narrative_state.phase_value}"
+                )
                 self._log_state_summary("进入游戏")
                 return self._build_status_response()
 
@@ -1091,7 +1235,8 @@ class GameManager:
             old_ns_dict = ns.to_dict()
 
             # 规则引擎 + 事件检查
-            updated_ns, triggered_events = update_and_get_events(ns, text, gs.round_count, genre=_genre)
+            updated_ns, triggered_events = update_and_get_events(
+                ns, text, gs.round_count, genre=_genre)
             self.game.state_change_log.append({
                 "round": gs.round_count,
                 "from_state": old_ns_dict,
@@ -1107,9 +1252,13 @@ class GameManager:
                 if ev.state_mutate:
                     apply_state_mutate(updated_ns, ev.state_mutate)
                 self.game.event_log.append({
-                    "round": gs.round_count,
-                    "event_id": ev.event_id,
-                    "narrative_snippet": ev.narrative_template[:100] if ev.narrative_template else "",
+                    "round":
+                    gs.round_count,
+                    "event_id":
+                    ev.event_id,
+                    "narrative_snippet":
+                    ev.narrative_template[:100]
+                    if ev.narrative_template else "",
                 })
                 event_used = ev
 
@@ -1117,7 +1266,7 @@ class GameManager:
             current_chapter_info = None
             if gs.chapters and len(gs.chapters) >= gs.current_chapter:
                 current_chapter_info = gs.chapters[gs.current_chapter - 1]
-            
+
             turn_input = {
                 "assets": self._compact_assets_for_turn(gs.assets),
                 "current_state": gs.story_state,
@@ -1128,14 +1277,18 @@ class GameManager:
             if current_chapter_info:
                 turn_input["current_chapter"] = current_chapter_info
 
-            self._log_flow(f"回合 {gs.round_count} 开始", f"genre={_genre} phase={updated_ns.phase_value} risk={updated_ns.risk_level.value}")
+            self._log_flow(
+                f"回合 {gs.round_count} 开始",
+                f"genre={_genre} phase={updated_ns.phase_value} risk={updated_ns.risk_level.value}"
+            )
             logger.info(f"[玩家] {text[:80]}{'...' if len(text) > 80 else ''}")
 
             # 即使事件触发也调用 LLM 推进剧情（事件仅记录，不替代 LLM 输出）
             director_prompt = build_director_prompt(updated_ns, genre=_genre)
             if event_used:
                 director_prompt += f"\n\n【本回合触发事件】{event_used.event_id}：{event_used.narrative_template}\n请据此强化叙事氛围，但仍由你输出完整叙事推进剧情。"
-                self._log_flow("事件触发", f"{event_used.event_id} → 注入导演提示，LLM 继续输出")
+                self._log_flow("事件触发",
+                               f"{event_used.event_id} → 注入导演提示，LLM 继续输出")
 
             # 根据 language_code 添加语言要求
             language_code = gs.language_code or "en"
@@ -1156,8 +1309,7 @@ class GameManager:
                 f"所有文本内容都必须使用 {language_code}，不得混用其他语言。\n\n"
                 f"【重要结构要求】\n"
                 f"- dialogues 字段必须是一个数组，但最多只包含 1 条 NPC 对话；如果你有多句想说的话，请把它们合并到同一条 text 里，用换行或合适的分句连接。\n"
-                f"- 严禁在同一轮输出多条 NPC 对话对象（即 dialogues.length 不能大于 1）。"
-            )
+                f"- 严禁在同一轮输出多条 NPC 对话对象（即 dialogues.length 不能大于 1）。")
 
             # 根据游戏类型获取对应的提示词
             turn_engine_prompt = get_turn_engine_system_prompt(gs.game_type)
@@ -1166,17 +1318,24 @@ class GameManager:
             raw = await self._call_openai(
                 model=self.turn_model,
                 messages=[
-                    {"role": "system", "content": system_content},
-                    {"role": "user", "content": json.dumps(turn_input, ensure_ascii=False)},
+                    {
+                        "role": "system",
+                        "content": system_content
+                    },
+                    {
+                        "role": "user",
+                        "content": json.dumps(turn_input, ensure_ascii=False)
+                    },
                 ],
                 temperature=0.7,
             )
-            logger.info(f"---------- LLM耗时: {time.time() - start:.2f}s -------------")
+            logger.info(
+                f"---------- LLM耗时: {time.time() - start:.2f}s -------------")
             out, err = extract_first_json_object(raw)
             if out is None:
                 logger.warning(f"turn engine parse failed: {err}")
                 out = {}
-            
+
             # 提取数据（确保所有字段都存在）
             transition = out.get("transition", "")
             narrative = out.get("narration", "")
@@ -1185,7 +1344,7 @@ class GameManager:
             hooks = out.get("hooks", {})
             state_delta_raw = out.get("state_delta", {})
             flags = out.get("flags", {})
-            
+
             # 确保所有字段都有默认值
             if not isinstance(transition, str):
                 transition = ""
@@ -1208,7 +1367,7 @@ class GameManager:
                 hooks["player_goal"] = hooks.get("player_goal", "") or ""
 
             if gs.game_type in ("companion_route", "companion_open", "私聊角色类"):
-                hooks = {}   # 角色陪伴类游戏 hooks 设为空
+                hooks = {}  # 角色陪伴类游戏 hooks 设为空
 
             # 保存最后一条LLM返回的原始数据（确保包含所有字段）
             # narration 字段只包含当前回合的旁白
@@ -1218,41 +1377,48 @@ class GameManager:
                 "narration": narrative if narrative else "",  # 只包含当前回合的旁白
                 # "sound": sound,
                 "sound": "",
-                "dialogues": dialogues if isinstance(dialogues, list) else [],  # 只包含当前轮次的NPC对话
+                "dialogues": dialogues
+                if isinstance(dialogues, list) else [],  # 只包含当前轮次的NPC对话
                 "hooks": hooks,
                 "state_delta": state_delta_raw,
                 "flags": flags
             }
-            
+
             # 兼容旧格式（player_options）
             player_options = out.get("player_options", [])
             if not player_options and hooks and isinstance(hooks, dict):
                 player_goal = hooks.get("player_goal", "")
                 if player_goal:
                     player_options = [player_goal]
-            
+
             chapter_goal_completed = flags.get("chapter_goal_completed", False)
-            updated_ns = apply_post_turn_updates(updated_ns, state_delta_raw or out)
+            updated_ns = apply_post_turn_updates(updated_ns, state_delta_raw
+                                                 or out)
             self.game.narrative_state = updated_ns
-            
+
             # 记录日志
             if transition:
                 self._log_flow("LLM 返回", f"transition={transition}")
             if dialogues:
                 self._log_flow("LLM 返回", f"dialogues={len(dialogues)}条")
             if narrative:
-                self._log_flow("LLM 返回", f"narration={len(narrative)}字 sound={sound}")
-            self._log_flow("LLM 返回", f"game_ended={flags.get('game_ended', False)}")
+                self._log_flow("LLM 返回",
+                               f"narration={len(narrative)}字 sound={sound}")
+            self._log_flow("LLM 返回",
+                           f"game_ended={flags.get('game_ended', False)}")
 
             # 剧情状态合并（校验 + 应用）
             validated_delta = {}
             if isinstance(state_delta_raw, dict):
-                validated_delta = StateSchema.validate_state_delta(state_delta_raw, gs.story_state)
+                validated_delta = StateSchema.validate_state_delta(
+                    state_delta_raw, gs.story_state)
                 if validated_delta:
-                    gs.story_state = safe_merge_state(gs.story_state, validated_delta)
-            shown = validated_delta if validated_delta else (state_delta_raw if isinstance(state_delta_raw, dict) else {})
+                    gs.story_state = safe_merge_state(gs.story_state,
+                                                      validated_delta)
+            shown = validated_delta if validated_delta else (
+                state_delta_raw if isinstance(state_delta_raw, dict) else {})
             self._log_story_delta(gs.round_count, shown, bool(validated_delta))
-            
+
             # 检查角色攻略类游戏的好感度满值
             if gs.game_type == "companion_route" and gs.story_state.get("npc"):
                 npc = gs.story_state.get("npc", {})
@@ -1277,13 +1443,18 @@ class GameManager:
                         if gs.game_type == "story_chapter" and transition_chapter != gs.current_chapter:
                             if "chapter" not in gs.story_state:
                                 gs.story_state["chapter"] = {}
-                            gs.story_state["chapter"]["current_chapter"] = transition_chapter
-                            gs.story_state["chapter"]["chapter_progress"] = "刚开始"
-                            gs.story_state["chapter"]["chapter_goal_completed"] = False
-                            logger.info(f"🔧 章节类游戏：transition触发，已同步更新 story_state.chapter.current_chapter = {transition_chapter}")
+                            gs.story_state["chapter"][
+                                "current_chapter"] = transition_chapter
+                            gs.story_state["chapter"][
+                                "chapter_progress"] = "刚开始"
+                            gs.story_state["chapter"][
+                                "chapter_goal_completed"] = False
+                            logger.info(
+                                f"🔧 章节类游戏：transition触发，已同步更新 story_state.chapter.current_chapter = {transition_chapter}"
+                            )
                     except ValueError:
                         pass
-                
+
                 chapter_num = gs.current_chapter
                 if gs.chapters and len(gs.chapters) >= chapter_num:
                     chapter = gs.chapters[chapter_num - 1]
@@ -1291,16 +1462,20 @@ class GameManager:
                     content = f"📖 {chapter_title}：开始"
                     if chapter.get("goal"):
                         content += f"\n🎯 本章目标：{chapter.get('goal')}"
-                    self.game.messages.append(Message(role="ai", player_name="主持人", content=content, is_system=True))
-            
+                    self.game.messages.append(
+                        Message(role="ai",
+                                player_name="主持人",
+                                content=content,
+                                is_system=True))
+
             # 构建主要内容
             content_parts = []
-            
+
             if narrative:
                 content_parts.append(narrative.strip())
                 if sound:
                     content_parts.append(f"[声音：{sound}]")
-            
+
             if dialogues:
                 dialogue_texts = []
                 for d in dialogues:
@@ -1310,58 +1485,73 @@ class GameManager:
                         dialogue_texts.append(f"{name}：{dialogue_text}")
                 if dialogue_texts:
                     content_parts.append("\n".join(dialogue_texts))
-            
+
             if hooks and hooks.get("player_goal"):
                 content_parts.append(f"\n你可以尝试：{hooks.get('player_goal')}")
-            
+
             if content_parts:
                 content = "\n".join(content_parts)
-                self.game.messages.append(Message(role="ai", player_name="主持人", content=content))
+                self.game.messages.append(
+                    Message(role="ai", player_name="主持人", content=content))
             elif not transition:
                 # 如果没有内容，使用默认提示
                 content = f"📖 第 {gs.round_count} 回合：\n\n（等待剧情推进...）"
-                self.game.messages.append(Message(role="ai", player_name="主持人", content=content))
+                self.game.messages.append(
+                    Message(role="ai", player_name="主持人", content=content))
 
             # 检查章节目标是否完成
             if chapter_goal_completed and not gs.chapter_goal_completed:
                 gs.chapter_goal_completed = True
-                
+
                 # 同步更新 story_state 中的 chapter 字段（如果是章节类游戏）
                 if gs.game_type == "story_chapter" and "chapter" in gs.story_state:
                     if not isinstance(gs.story_state["chapter"], dict):
                         gs.story_state["chapter"] = {}
                     gs.story_state["chapter"]["chapter_goal_completed"] = True
                     gs.story_state["chapter"]["chapter_progress"] = "已完成"
-                    logger.info(f"🔧 章节类游戏：已同步更新 story_state.chapter.chapter_goal_completed = True")
-                
+                    logger.info(
+                        f"🔧 章节类游戏：已同步更新 story_state.chapter.chapter_goal_completed = True"
+                    )
+
                 # 显示章节结束提示
                 if current_chapter_info:
-                    chapter_title = current_chapter_info.get("title", f"第{gs.current_chapter}章")
+                    chapter_title = current_chapter_info.get(
+                        "title", f"第{gs.current_chapter}章")
                     chapter_end_msg = f"✨ {chapter_title}：结束\n\n"
                     chapter_end_msg += f"🎉 恭喜！你已完成本章目标：{current_chapter_info.get('goal', '')}\n\n"
-                    
+
                     # 检查是否有下一章节
                     if gs.chapters and len(gs.chapters) > gs.current_chapter:
                         # 先显示章节结束消息
-                        self.game.messages.append(Message(role="ai", player_name="主持人", content=chapter_end_msg, is_system=True))
-                        
+                        self.game.messages.append(
+                            Message(role="ai",
+                                    player_name="主持人",
+                                    content=chapter_end_msg,
+                                    is_system=True))
+
                         # 进入下一章节
                         gs.current_chapter += 1
-                        
+
                         # 同步更新 story_state 中的 chapter 字段
                         if gs.game_type == "story_chapter":
                             if "chapter" not in gs.story_state:
                                 gs.story_state["chapter"] = {}
-                            gs.story_state["chapter"]["current_chapter"] = gs.current_chapter
-                            gs.story_state["chapter"]["chapter_progress"] = "刚开始"
-                            gs.story_state["chapter"]["chapter_goal_completed"] = False
-                            logger.info(f"🔧 章节类游戏：已同步更新 story_state.chapter.current_chapter = {gs.current_chapter}")
-                        
+                            gs.story_state["chapter"][
+                                "current_chapter"] = gs.current_chapter
+                            gs.story_state["chapter"][
+                                "chapter_progress"] = "刚开始"
+                            gs.story_state["chapter"][
+                                "chapter_goal_completed"] = False
+                            logger.info(
+                                f"🔧 章节类游戏：已同步更新 story_state.chapter.current_chapter = {gs.current_chapter}"
+                            )
+
                         next_chapter = gs.chapters[gs.current_chapter - 1]
-                        next_title = next_chapter.get("title", f"第{gs.current_chapter}章")
+                        next_title = next_chapter.get(
+                            "title", f"第{gs.current_chapter}章")
                         next_goal = next_chapter.get("goal", "")
                         next_description = next_chapter.get("description", "")
-                        
+
                         # 显示下一章节开始提示
                         next_chapter_start_msg = f"📖 {next_title}：开始\n\n"
                         if next_goal:
@@ -1369,28 +1559,41 @@ class GameManager:
                         if next_description:
                             next_chapter_start_msg += f"{next_description}\n\n"
                         next_chapter_start_msg += "故事继续..."
-                        
-                        self.game.messages.append(Message(role="ai", player_name="主持人", content=next_chapter_start_msg, is_system=False))
+
+                        self.game.messages.append(
+                            Message(role="ai",
+                                    player_name="主持人",
+                                    content=next_chapter_start_msg,
+                                    is_system=False))
                         gs.chapter_goal_completed = False  # 重置下一章节的完成状态
-                        
+
                         # 设置章节转换的transition输出
                         self.game.last_turn_response = {
                             "transition": f"chapter_{gs.current_chapter}"
                         }
-                        self._log_flow("章节完成", f"章节{gs.current_chapter - 1}完成，进入章节{gs.current_chapter}")
+                        self._log_flow(
+                            "章节完成",
+                            f"章节{gs.current_chapter - 1}完成，进入章节{gs.current_chapter}"
+                        )
                     else:
                         chapter_end_msg += "🏁 所有章节已完成！故事即将迎来结局..."
-                        self.game.messages.append(Message(role="ai", player_name="主持人", content=chapter_end_msg, is_system=True))
+                        self.game.messages.append(
+                            Message(role="ai",
+                                    player_name="主持人",
+                                    content=chapter_end_msg,
+                                    is_system=True))
                         self._log_flow("章节完成", f"所有章节完成，游戏即将结束")
 
             # 打印每轮的 story_state
             logger.info(f"[story_state] 回合 {gs.round_count} 的 story_state:")
-            logger.info(json.dumps(gs.story_state, ensure_ascii=False, indent=2))
-            
+            logger.info(
+                json.dumps(gs.story_state, ensure_ascii=False, indent=2))
+
             self._log_flow(f"回合 {gs.round_count} 完成", "持久化")
             _aigc = self._pick_aigc_generate(gs.round_count)
             if _aigc:
-                logger.info(f"[aigc_generate] 回合 {gs.round_count} 触发 → {_aigc}")
+                logger.info(
+                    f"[aigc_generate] 回合 {gs.round_count} 触发 → {_aigc}")
 
             # flags 结束
             if isinstance(flags, dict) and flags.get("game_ended") is True:
@@ -1398,13 +1601,16 @@ class GameManager:
                 gs.ended_reason = flags.get("reason") or "game_ended"
                 ending_id = ""
                 if self.game.narrative_state:
-                    ending_id = compute_ending_id(self.game.narrative_state, genre=_genre)
-                
+                    ending_id = compute_ending_id(self.game.narrative_state,
+                                                  genre=_genre)
+
                 # 根据结束原因生成不同的消息
                 if gs.ended_reason == "affection_max":
                     npc_name = "角色"
-                    if gs.story_state.get("npc") and isinstance(gs.story_state.get("npc"), dict):
-                        npc_name = gs.story_state.get("npc", {}).get("name", "角色")
+                    if gs.story_state.get("npc") and isinstance(
+                            gs.story_state.get("npc"), dict):
+                        npc_name = gs.story_state.get("npc",
+                                                      {}).get("name", "角色")
                     msg = f"💕 恭喜！你与{npc_name}的好感度已达到满值（100），达成了完美结局！"
                     if ending_id and ending_id != "ending_unknown":
                         msg += f"\n结局：{ending_id}"
@@ -1414,10 +1620,12 @@ class GameManager:
                     if ending_id and ending_id != "ending_unknown":
                         msg += f"。结局：{ending_id}"
                     msg += "。你可以点击「开始游戏」重开。"
-                
+
                 self.game.messages.append(
-                    Message(role="ai", player_name="主持人", content=msg, is_system=True)
-                )
+                    Message(role="ai",
+                            player_name="主持人",
+                            content=msg,
+                            is_system=True))
                 self._log_flow("游戏结束", f"AI判定 {gs.ended_reason}")
 
             # 回合数上限（已注释：暂时取消轮次限制）
@@ -1439,7 +1647,8 @@ class GameManager:
             resp = self._build_status_response()
             if _aigc:
                 resp["aigc_generate"] = _aigc
-            logger.info(f"---------- 总耗时: {time.time() - s:.2f}s -------------")
+            logger.info(
+                f"---------- 总耗时: {time.time() - s:.2f}s -------------")
             return resp
 
         return await self._with_txn_for_group(group_id, _impl)
@@ -1452,6 +1661,7 @@ class GameManager:
             group_id: 群 ID
         返回：包含更新后游戏状态的字典
         """
+
         async def _impl():
             if not self.game:
                 return {"error": "游戏未开始"}
@@ -1464,8 +1674,7 @@ class GameManager:
                     player_name="主持人",
                     content="🏁 已结束游戏。你可以点击「开始游戏」重开。",
                     is_system=True,
-                )
-            )
+                ))
             self._log_flow("游戏结束", "手动结束")
             return self._build_status_response()
 
@@ -1487,36 +1696,47 @@ class GameManager:
                 "dialogues": [],
                 "hooks": {}
             }
-        
+
         # 如果有保存的模型原始输出，直接使用并确保所有字段存在
         if self.game.last_turn_response:
             response = self.game.last_turn_response
-            
+
             result = {
-                "transition": response.get("transition", "") or "",
-                "narration": response.get("narration", "") or "",  # 只返回当前最新的旁白
-                "sound": response.get("sound", "") or "",
-                "dialogues": response.get("dialogues", []) if isinstance(response.get("dialogues"), list) else [],  # 只返回当前轮次的NPC对话
-                "hooks": response.get("hooks", {}) or {}
+                "transition":
+                response.get("transition", "") or "",
+                "narration":
+                response.get("narration", "") or "",  # 只返回当前最新的旁白
+                "sound":
+                response.get("sound", "") or "",
+                "dialogues":
+                response.get("dialogues", []) if isinstance(
+                    response.get("dialogues"), list) else [],  # 只返回当前轮次的NPC对话
+                "hooks":
+                response.get("hooks", {}) or {}
             }
-            
+
             # 确保 hooks 有 player_goal 字段
             if not isinstance(result["hooks"], dict):
                 result["hooks"] = {}
             if "player_goal" not in result["hooks"]:
                 result["hooks"]["player_goal"] = ""
-            
-            logger.info(f"[格式化] 返回完整格式: transition={bool(result['transition'])}, narration={len(result['narration'])}字, dialogues={len(result['dialogues'])}条当前轮次对话")
-            print(f"[格式化输出] {json.dumps(result, ensure_ascii=False, indent=2)}")
+
+            logger.info(
+                f"[格式化] 返回完整格式: transition={bool(result['transition'])}, narration={len(result['narration'])}字, dialogues={len(result['dialogues'])}条当前轮次对话"
+            )
+            print(
+                f"[格式化输出] {json.dumps(result, ensure_ascii=False, indent=2)}")
             return result
-        
+
         # 如果没有保存的模型输出
         result = {
             "transition": "",
             "narration": "",
             "sound": "",
             "dialogues": [],
-            "hooks": {"player_goal": ""}
+            "hooks": {
+                "player_goal": ""
+            }
         }
         logger.warning("[格式化] 没有保存的模型输出，返回空字段")
         return result
@@ -1537,10 +1757,10 @@ class GameManager:
             }
 
         gs = self.game.global_state
-        
+
         # 获取新格式的响应数据
         frontend_format = self._format_response_for_frontend()
-        
+
         # 合并基础字段和新格式数据
         result = {
             "global_state": gs.to_public_dict(),
@@ -1551,7 +1771,7 @@ class GameManager:
             "game_type": gs.game_type,
             "script": gs.script if gs.script else {},  # 返回剧本信息
         }
-        
+
         # 将新格式数据合并到结果中（如果有的话）
         if frontend_format:
             result.update(frontend_format)
@@ -1600,8 +1820,10 @@ class GameManager:
             "event_log": self.game.event_log,
         }
 
-
-    async def create_official_game(self, group_id: str, game_id: str, language_code: str = "cn"):
+    async def create_official_game(self,
+                                   group_id: str,
+                                   game_id: str,
+                                   language_code: str = "cn"):
         """
         创建官方游戏（按 group_id 隔离）
         
@@ -1611,6 +1833,7 @@ class GameManager:
             language_code: 语言代码
         返回：包含游戏初始化信息的字典
         """
+
         async def _impl():
             # 1. 初始化游戏状态
             self.game = Game()
@@ -1622,31 +1845,39 @@ class GameManager:
             gs.language_code = language_code  # 保存语言代码到状态
 
             # 获取官方游戏设定
-            prompts, game_type = get_official_game_prompt(game_id, "cn")  # 默认用中文设定
+            prompts, game_type = get_official_game_prompt(game_id,
+                                                          "cn")  # 默认用中文设定
             gs.game_type = game_type
 
             # 2. 生成游戏大纲
-            self._log_flow("官方游戏", f"开始生成大纲，game_id={game_id}, language={language_code}")
-            generated_outline = await self._generate_outline(prompts, game_type, language_code)
+            self._log_flow(
+                "官方游戏", f"开始生成大纲，game_id={game_id}, language={language_code}")
+            generated_outline = await self._generate_outline(
+                prompts, game_type, language_code)
             gs.outline = generated_outline
             gs.progress = Progress.AWAITING_OUTLINE_REVIEW
-            
+
             # 3. 添加大纲消息（模拟 send_message 中的逻辑）
-            outline_msg = (
-                f"📝 我已根据你的输入生成了以下剧情大纲：\n\n"
-                f"{generated_outline}\n\n"
-                f"你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，"
-                f"或者发送修改后的大纲内容来替换它。"
-            )
+            outline_msg = (f"📝 我已根据你的输入生成了以下剧情大纲：\n\n"
+                           f"{generated_outline}\n\n"
+                           f"你可以直接发送「确认」或「开始」来使用这个大纲生成游戏，"
+                           f"或者发送修改后的大纲内容来替换它。")
             self.game.messages.append(
-                Message(role="ai", player_name="主持人", content=outline_msg, is_system=False)
-            )
+                Message(role="ai",
+                        player_name="主持人",
+                        content=outline_msg,
+                        is_system=False))
             self.game.last_turn_response = {
-                "transition": "", "narration": "", "sound": "",
-                "dialogues": [], "hooks": {"player_goal": ""}
+                "transition": "",
+                "narration": "",
+                "sound": "",
+                "dialogues": [],
+                "hooks": {
+                    "player_goal": ""
+                }
             }
             self._log_flow("大纲生成完成", "等待确认")
-        
+
         # 先完成大纲生成的事务（_with_txn 会自动持久化状态）
         await self._with_txn_for_group(group_id, _impl)
 
@@ -1655,31 +1886,31 @@ class GameManager:
         self._log_flow("官方游戏", "模拟用户确认，开始生成剧本和构建世界")
         result = await self.send_message(group_id, "确认", player_name="系统")
         return result
-        
+
         # 原来的实现（已注释）
         # def _impl():
         #     # 1. 初始化游戏状态
         #     self.game = Game()
         #     gs = self.game.global_state
-        #     
+        #
         #     # 获取官方游戏设定
         #     prompts, game_type = get_official_game_prompt(game_id, language_code)
-        #     
+        #
         #     # 2. 生成游戏大纲（跳过用户输入阶段）
         #     self._log_flow("官方游戏", f"开始生成大纲，game_id={game_id}, language={language_code}")
         #     generated_outline = self._generate_outline(prompts, game_type)
         #     gs.outline = generated_outline
         #     gs.game_type = game_type
-        #     
+        #
         #     # 3. 直接生成游戏剧本（跳过用户审核）
         #     self._log_flow("官方游戏", "生成剧本")
         #     script = self._generate_script(generated_outline, game_type)
         #     gs.script = script
-        #     
+        #
         #     # 4. 构建游戏世界
         #     self._log_flow("官方游戏", "构建世界")
         #     built = self._build_world(script, game_type)
-        #     
+        #
         #     # 5. 完整的状态更新
         #     gs.assets = built.get("assets", {}) or {}
         #     gs.story_state = built.get("initial_state", {}) or {}
@@ -1691,24 +1922,24 @@ class GameManager:
         #     gs.current_chapter = 1
         #     gs.chapters = built.get("chapters", []) or []
         #     gs.chapter_goal_completed = False
-        #     
+        #
         #     # 6. 初始化叙事状态
         #     _genre = gs.assets.get("game_genre", "story")
         #     self.game.narrative_state = init_narrative_state(genre=_genre)
-        #     
+        #
         #     # 7. 初始化消息队列和对话历史
         #     # 添加游戏介绍消息
         #     intro = (built.get("player_facing_introduction") or "").strip()
         #     if intro:
         #         intro_msg = Message(role="ai", player_name="主持人", content=intro, is_system=True)
         #         self.game.messages.append(intro_msg)
-        #     
+        #
         #     # 添加第一场景提示
         #     first_scene = (built.get("first_scene_prompt") or "").strip()
         #     if first_scene:
         #         first_scene_msg = Message(role="ai", player_name="主持人", content=first_scene, is_system=False)
         #         self.game.messages.append(first_scene_msg)
-        #     
+        #
         #     # 8. 初始化最后回合响应
         #     # 显示第一章开始提示（如果有章节）
         #     if gs.chapters and len(gs.chapters) > 0:
@@ -1719,7 +1950,7 @@ class GameManager:
         #         if chapter_goal:
         #             chapter_start_msg += f"🎯 本章目标：{chapter_goal}\n\n"
         #         chapter_start_msg += first_scene
-        #         
+        #
         #         # 更新最后回合响应，包含章节转换信息
         #         self.game.last_turn_response = {
         #             "transition": "chapter_1",
@@ -1737,11 +1968,11 @@ class GameManager:
         #             "dialogues": [],
         #             "hooks": {"player_goal": ""}
         #         }
-        #     
+        #
         #     self._log_flow("官方游戏", "初始化完成")
         #     self._log_state_summary("官方游戏创建")
-        #     
+        #
         #     # 9. 返回游戏状态
         #     return self._build_status_response()
-        # 
+        #
         # return self._with_txn(_impl)

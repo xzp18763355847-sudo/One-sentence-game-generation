@@ -18,14 +18,14 @@ class StateSchema:
     定义固定的状态结构 schema
     
     最小Demo示例：RPG游戏
-    - player: {hp, max_hp, level, status}
+    - player: {hp, max_hp, level, status, appearance}
     - monster: {hp, max_hp, name} (可选)
-    - world: {scene, time, location}
+    - world: {scene, scene_description, time, location}
     
     或情感游戏示例：
-    - player: {name, status}
-    - npc: {name, affection, relationship}
-    - world: {scene, time}
+    - player: {name, status, appearance}
+    - npc: {name, affection, relationship, appearance}
+    - world: {scene, scene_description, time}
     """
     
     # 定义允许的顶层字段及其子字段结构
@@ -38,15 +38,18 @@ class StateSchema:
             "level": int,
             "status": str,
             "name": str,
+            "appearance": str,  # 玩家的衣服等外貌特征
         },
         
         "npc": {  # 可选，如果游戏中有NPC
             "name": str,
             "affection": int,  # 好感度 0-100
             "relationship": str,
+            "appearance": str,  # NPC的衣服等外貌特征
         },
         "world": {
             "scene": str,
+            "scene_description": str,  # 场景的详细描写
             "time": str,
             "location": str,
         },
@@ -247,9 +250,11 @@ class StateSchema:
                 "level": 1,
                 "status": "正常",
                 "name": "玩家",
+                "appearance": "",
             },
             "world": {
                 "scene": "起始场景",
+                "scene_description": "",
                 "time": "早晨",
                 "location": "未知",
             },

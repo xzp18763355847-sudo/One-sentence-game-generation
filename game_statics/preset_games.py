@@ -389,15 +389,18 @@ PRESET_GAME_SNAPSHOTS = {
                 "player": {
                     "level": 1,
                     "status": "Wounded, cautious",
-                    "name": "Survivor"
+                    "name": "Survivor",
+                    "appearance": "A wounded survivor, bleeding from a fresh cut on his arm."
                 },
                 "npc": {
                     "name": "Raven",
                     "affection": 15,
-                    "relationship": "Suspicious, guarded"
+                    "relationship": "Suspicious, guarded",
+                    "appearance": "A red-haired woman with a gun in hand, her wild red hair catching the fading light."
                 },
                 "world": {
                     "scene": "Ruined bookstore",
+                    "scene_description": "The bookstore is a small, two-story building with a single entrance. The windows are boarded up, and the roof is missing. The building is covered in graffiti and debris. The street is empty, and the air is thick with the smell of decay.",
                     "time": "Late afternoon",
                     "location": "City outskirts"
                 },
@@ -520,15 +523,18 @@ PRESET_GAME_SNAPSHOTS = {
                 "player": {
                     "level": 1,
                     "status": "calm",
-                    "name": "Mrs. Lin"
+                    "name": "Mrs. Lin",
+                    "appearance": ""
                 },
                 "npc": {
                     "name": "Malik",
                     "affection": 20,
-                    "relationship": "guardian"
+                    "relationship": "guardian",
+                    "appearance": ""
                 },
                 "world": {
                     "scene": "seaside mansion foyer",
+                    "scene_description": "",
                     "time": "early evening",
                     "location": "seaside mansion"
                 },
