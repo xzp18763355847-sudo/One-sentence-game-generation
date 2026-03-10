@@ -81,8 +81,8 @@ _TURN_ENGINE_BASE_PROMPT = """
 
 【Guide 智能引导规则】
 - guide 字段用于追踪对话历史和智能引导玩家，专门解决用户重复说话导致AI重复回应的问题
-- guide.already_suggested 是字符串，记录已经尝试过的建议主题（如"已尝试：探索,对话,检查物品,询问背景"）
-- guide.pending 是字符串，记录当前应该引导玩家转向的新方向或话题
+- guide.already_suggested 是字符串，记录用户已经尝试过的建议主题（如"已尝试：探索,对话,检查物品,询问背景"）
+- guide.pending 是字符串，记录当前AI应该引导玩家转向的新方向或话题
 
 【核心策略：识别重复并主动转换】
 - 当玩家出现重复行为或话题时，AI必须：
@@ -101,7 +101,7 @@ _TURN_ENGINE_BASE_PROMPT = """
 - 每次引导时，将关键主题词追加到 state_delta.guide.already_suggested（格式：词1,词2,词3）
 - **话题数量限制**：only保留最近10个话题关键词，超出时自动删除最旧的话题
 - 更新逻辑：新话题 + 现有话题，按逗号分割后只取最后10个，重新组合成字符串
-- state_delta.guide.pending 更新为具体的下一步目标，指向剧情推进方向
+- state_delta.guide.pending 更新为具体的下一步目标，帮助剧情推进
 - 优先通过剧情发展和角色主动性解决重复问题，而非单纯的建议变换
 
 【话题管理示例】
