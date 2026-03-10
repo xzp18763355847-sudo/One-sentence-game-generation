@@ -81,12 +81,12 @@ _TURN_ENGINE_BASE_PROMPT = """
 
 【Guide 智能引导规则】
 - guide 字段用于追踪对话历史和智能引导玩家，专门解决用户重复说话导致AI重复回应的问题
-- guide.already_suggested 是字符串，记录用户已经尝试过的建议主题（如"已尝试：探索,对话,检查物品,询问背景"）
-- guide.pending 是字符串，记录当前AI应该引导玩家转向的新方向或话题
+- guide.already_suggested 是字符串，记录已经尝试过的对话主题（如"已尝试：探索,对话,检查物品,询问背景"）
+- guide.pending 是字符串，记录当前应该引导玩家转向的新方向或话题
 
 【核心策略：识别重复并主动转换】
-- 当玩家出现重复行为或话题时，AI必须：
-  1. 立即检查 guide.already_suggested，识别是否为重复内容
+- 当玩家出现重复行为或话题时，你必须：
+  1. 立即检查 guide.already_suggested，识别是否为重复内容和话题
   2. 主动在 narration 或 dialogues 中引入新元素，打破重复循环
   3. 通过 hooks.player_goal 提供明确的新方向，而非重复旧建议
   4. 让角色或环境主动推进剧情，而不是被动等待玩家
