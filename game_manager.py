@@ -1650,12 +1650,12 @@ class GameManager:
                 resp["story_state"] = gs.story_state
             logger.info(
                 f"---------- 总耗时: {time.time() - s:.2f}s -------------")
-            logger.info(f"---------- resp.story_state -------------")
-            logger.info(resp.get("story_state"))
-            logger.info(f"---------- resp.story_state -------------")
-            logger.info(f"---------- resp.aigc_generate -------------")
-            logger.info(resp.get("aigc_generate"))
-            logger.info(f"---------- resp.aigc_generate -------------")
+            # logger.info(f"---------- resp.story_state -------------")
+            # logger.info(resp.get("story_state"))
+            # logger.info(f"---------- resp.story_state -------------")
+            # logger.info(f"---------- resp.aigc_generate -------------")
+            # logger.info(resp.get("aigc_generate"))
+            # logger.info(f"---------- resp.aigc_generate -------------")
             return resp
 
         return await self._with_txn_for_group(group_id, _impl)
