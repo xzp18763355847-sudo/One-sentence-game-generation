@@ -54,7 +54,7 @@ class StartGameRequest(BaseModel):
 
 class StartOfficialGameRequest(BaseModel):
     group_id: str = DEFAULT_GROUP_ID
-    text: str  # 这里实际是 game_id
+    game_id: str  # 这里实际是 game_id
     # language_code: str = "en"
 
 
@@ -68,7 +68,7 @@ class SendMessageSseRequest(BaseModel):
     group_id: str = DEFAULT_GROUP_ID
     text: str
     player_name: str = "玩家"
-    custom_variables: Optional[dict] = {}  # 扩展字段 
+    custom_variables: Optional[dict] = {}  # 扩展字段
 
 
 class EndGameRequest(BaseModel):
@@ -154,8 +154,8 @@ async def start_offcial_game(request: StartOfficialGameRequest):
     data = request.dict()
     logger.info(f"POST /api/start_offcial_game 入参: {data}")
     group_id = _get_group_id(data)
-    # game_id = data.get("game_id", "").strip()
-    game_id = request.text.strip()  # 这里 text 字段实际是 game_id
+    game_id = data.get("game_id", "").strip()
+    # game_id = request.text.strip()  # 这里 text 字段实际是 game_id
     if game_id not in OFFCIAL_GAME_PROMPT.keys():
         raise HTTPException(status_code=400, detail=f"无效的游戏ID: {game_id}")
 
@@ -241,12 +241,16 @@ async def send_message_sse(request: SendMessageSseRequest):
     custom_variables = request.custom_variables or {}
     language_code = custom_variables.get("language_code", "en")
 
-    result = await game_manager.send_message(group_id=group_id, text=text, player_name=player_name,
+    result = await game_manager.send_message(group_id=group_id,
+                                             text=text,
+                                             player_name=player_name,
                                              language_code=language_code)
     if "error" in result:
-        logger.warning("POST /api/message_sse group_id=%s error=%s", group_id, result.get("error"))
+        logger.warning("POST /api/message_sse group_id=%s error=%s", group_id,
+                       result.get("error"))
         raise HTTPException(status_code=400, detail=result.get("error"))
-    game_type = result.get("game_type") or result.get("global_state", {}).get("game_type")
+    game_type = result.get("game_type") or result.get("global_state",
+                                                      {}).get("game_type")
     logger.info(f"----游戏类型   {game_type}------")
     transition = result.get("transition", "") or ""
     narration = result.get("narration", "") or ""
@@ -261,15 +265,22 @@ async def send_message_sse(request: SendMessageSseRequest):
         hooks["player_goal"] = ""
 
     # 判断是否为“私聊角色类”（角色陪伴类），如果是则不向前端返回 narration
-    game_type = result.get("game_type") or result.get("global_state", {}).get("game_type")
-        
-    aigc_generate = result.get("aigc_generate") if "aigc_generate" in result else None
+    game_type = result.get("game_type") or result.get("global_state",
+                                                      {}).get("game_type")
+
+    aigc_generate = result.get(
+        "aigc_generate") if "aigc_generate" in result else None
+    story_state = result.get("story_state") if "story_state" in result else None
     message_id = str(uuid.uuid4())
 
     def _wrap_reply(content: dict) -> dict:
         return {
             "type": "reply",
-            "payload": {"can_feedback": False, "can_rating": True, "content": content},
+            "payload": {
+                "can_feedback": False,
+                "can_rating": True,
+                "content": content
+            },
             "message_id": message_id,
         }
 
@@ -281,12 +292,20 @@ async def send_message_sse(request: SendMessageSseRequest):
         if transition:
             yield _sse_chunk(_wrap_reply({"transition": transition}))
         # 2) narration + sound
-        if game_type not in ["私聊角色类", ]:
-            yield _sse_chunk(_wrap_reply({"narration": narration, "sound": sound}))
+        if game_type not in [
+                "私聊角色类",
+        ]:
+            yield _sse_chunk(
+                _wrap_reply({
+                    "narration": narration,
+                    "sound": sound
+                }))
         # 3) dialogues + hooks（若 result 含 aigc_generate 则一并返回）
         dialogues_payload: dict = {"dialogues": dialogues, "hooks": hooks}
         if aigc_generate is not None:
             dialogues_payload["aigc_generate"] = aigc_generate
+            if story_state is not None:
+                dialogues_payload["story_state"] = story_state
         yield _sse_chunk(_wrap_reply(dialogues_payload))
         # 4) 完整状态，便于前端更新 UI
         # yield _sse_chunk(_wrap_reply(result))

@@ -390,17 +390,17 @@ PRESET_GAME_SNAPSHOTS = {
                     "level": 1,
                     "status": "Wounded, cautious",
                     "name": "Survivor",
-                    "appearance": "A wounded survivor, bleeding from a fresh cut on his arm."
+                    "appearance": ""
                 },
                 "npc": {
                     "name": "Raven",
                     "affection": 15,
                     "relationship": "Suspicious, guarded",
-                    "appearance": "A red-haired woman with a gun in hand, her wild red hair catching the fading light."
+                    "appearance": ""
                 },
                 "world": {
                     "scene": "Ruined bookstore",
-                    "scene_description": "The bookstore is a small, two-story building with a single entrance. The windows are boarded up, and the roof is missing. The building is covered in graffiti and debris. The street is empty, and the air is thick with the smell of decay.",
+                    "scene_description": "",
                     "time": "Late afternoon",
                     "location": "City outskirts"
                 },
